@@ -1,5 +1,6 @@
 import random
 import string
+import datetime
 from flask_login import UserMixin
 import mysql.connector
 from contextlib import contextmanager
@@ -247,13 +248,11 @@ def get_seats_for_flight(flight_id):
 
 def get_flight_seat_map(flight_id):
     """
-    מחזיר את פרטי הטיסה ורשימת מושבים.
-    מייצר מפת מושבים דינמית ובודק אילו מושבים תפוסים ב-Flight_Tickets.
+    Returns the flight details and seat list
+    Creata a seat map and checks which seats are occupied in flight  tickets
     """
     with db_cur() as cursor:
-        # 1. שליפת פרטי הטיסה והמטוס כדי לדעת כמה שורות יש [cite: 25]
-        # הערה: אני מניח שיש עמודה airplane_id בטיסות וטבלה airplanes עם גודל.
-        # אם אין, נצטרך להשתמש בלוגיקה של "גדול/קטן" מהדרישות.
+        # Extract the flight details and airplanes to know the number of seats
         query_flight = """
             SELECT f.*, a.size 
             FROM Flights f 
@@ -266,17 +265,15 @@ def get_flight_seat_map(flight_id):
         if not flight:
             return None, []
 
-        # 2. קביעת מספר שורות ומחלקות לפי סוג המטוס [cite: 24]
-        # מטוס גדול: יש מחלקת עסקים. מטוס קטן: רק רגילה.
-        # לצורך הדוגמה נגדיר: מטוס קטן=20 שורות (A-C, D-F), גדול=40 שורות.
-        rows = 40 if flight['size'] else 20
+        # 2.Decide the number of rows and number of classes each airplain has. Big airplane - 2 classes, 40 rows. Small airplane - 1 class, 20 rows
+        rows = 40 if flight['size'] == 'Big' else 20
         cols = ['A', 'B', 'C', 'D', 'E', 'F']
 
-        # 3. בדיקת מושבים תפוסים
+        # 3. Checks for occupied seats
         cursor.execute("SELECT row_num, column_num FROM Flight_Tickets WHERE flight_id = %s", (flight_id,))
         taken_seats = {(r['row_num'], r['column_num']) for r in cursor.fetchall()}
 
-        # 4. בניית רשימת המושבים ל-HTML
+        # 4. Builds the list of seats in HTML
         seats_list = []
         for r in range(1, rows + 1):
             for c in cols:
@@ -290,40 +287,74 @@ def get_flight_seat_map(flight_id):
         return flight, seats_list
 
 
-def create_booking(flight_id, seats, user, guest_data=None):
+'''
+Need to think if the function below (create_booking is needed) is needed
+'''
+def create_booking(flight_id, selected_seats, user, guest_data=None):
     """
-    Create new booking and tickets
+    Creates a booking, handles guest registration, and assigns dynamic pricing.
     """
     with db_cur() as cursor:
         try:
-            # יצירת קוד הזמנה ייחודי
+            # Generate unique 8-character Order Code 
             order_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            
+            # 2. Handle Customer Identification
+            if user.is_authenticated:
+                email = user.id
+                customer_type = 'Registered'
+            else:
+                email = guest_data['email']
+                customer_type = 'Unregistered'
+                # Check if guest exists; if not, add them
+                cursor.execute("SELECT email FROM Unregistered_Customers WHERE email = %s", (email,))
+                if not cursor.fetchone():
+                    cursor.execute("""
+                        INSERT INTO Unregistered_Customers (email, first_name, middle_name, last_name, customer_type)
+                        VALUES (%s, %s, %s, %s, 'Unregistered')
+                    """, (email, guest_data['first_name'], guest_data.get('middle_name'), 
+                          guest_data['last_name']))
 
-            # זיהוי המזמין (מייל)
-            email = user.email if user.is_authenticated else guest_data['email']
-
-            # [cite: 38, 105] חישוב מחיר - בדוגמה זה פיקטיבי, בפועל יש לשלוף מחיר מהטיסה
-            # נניח מחיר בסיס 100 לכרטיס
-            price_per_ticket = 100
-
-            # שמירת ההזמנה (Orders)
+            # Create the Order
             cursor.execute("""
-                INSERT INTO Orders (order_code, order_date, email, status)
-                VALUES (%s, NOW(), %s, 'Active')
-            """, (order_code, email))
+                INSERT INTO Orders (order_code, email, status, order_date, customer_type)
+                VALUES (%s, %s, 'Active', CURDATE(), %s)
+            """, (order_code, email, customer_type))
 
-            # שמירת הכרטיסים (Flight_Tickets)
-            for seat in seats:
-                row, col = seat.split('-')  # ה-HTML שולח "5-A"
+            # Insert Tickets with Dynamic Pricing 
+            for seat_key in selected_seats:
+                # seat_key format: "row-col-airplane_id"
+                row, col, airplane_id = seat_key.split('-')
+                
+                # Fetch seat class (Economy/Business)
                 cursor.execute("""
-                    INSERT INTO Flight_Tickets 
-                    (order_code, flight_id, row_num, column_num, class_type, price)
-                    VALUES (%s, %s, %s, %s, 'Economy', %s)
-                """, (order_code, flight_id, row, col, price_per_ticket))
+                    SELECT class_type FROM Seats 
+                    WHERE row_num = %s AND column_num = %s AND airplane_id = %s
+                """, (row, col, airplane_id))
+                seat_info = cursor.fetchone()
+                class_type = seat_info['class_type']
 
-            # אם זה אורח, צריך לשמור פרטים בטבלאות רלוונטיות אם נדרש, או להסתמך על ההזמנה
+                # Fetch dynamic price set by manager for this flight/class by inserting individual tickets to the order
+                for seat_key in selected_seats:
+                # Expecting seat_key format: "row-col-class-airplane_id"
+                row, col, s_class, airplane_id = seat_key.split('-')
+                
+                cursor.execute("""
+                    SELECT price FROM Flight_Pricing 
+                    WHERE flight_id = %s AND class_type = %s
+                """, (flight_id, class_type))
+                price_res = cursor.fetchone()
+                if price_res:
+                    ticket_price = price_res['price']
+                else:
+                    ticket_price = 350.00 if s_class == 'Business' else 150.00 #Fallback
 
-            return True, "Success", order_code
+                cursor.execute("""
+                    INSERT INTO Flight_Tickets (order_code, flight_id, row_num, column_num, class_type, airplane_id, price)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (order_code, flight_id, row, col, class_type, airplane_id, ticket_price))
 
-        except mysql.connector.Error as err:
-            return False, str(err), None
+            return True, "Booking successful!", order_code
+        except Exception as e:
+            print(f"Booking Error: {e}")
+            return False, "Failed to complete booking. Please try again.", None
