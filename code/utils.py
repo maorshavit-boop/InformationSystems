@@ -342,6 +342,7 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
                 cursor.execute("""
                     SELECT price FROM Flight_Pricing 
                     WHERE flight_id = %s AND class_type = %s
+                    LIMIT 1
                 """, (flight_id, class_type))
                 price_res = cursor.fetchone()
                 if price_res:
