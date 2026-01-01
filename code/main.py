@@ -73,6 +73,10 @@ def signup():
             flash(message, "danger")
     return render_template('signup.html')
 
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('homepage'))
 
 @app.route('/book_flight/<string:flight_id>')
 def book_flight(flight_id):
@@ -122,11 +126,26 @@ def complete_booking():
         flash(f"Booking failed: {message}", "danger")
         return redirect(url_for('book_flight', flight_id=flight_id))
 
-
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('homepage'))
+@app.route('/manager/set_price', methods=['POST'])
+@login_required
+def set_flights_price():
+    [cite_start]"""Allows managers to determine the price for a flight and class."""
+    if current_user.user_type != 'Manager':
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('homepage'))
+        
+    flight_id = request.form.get('flight_id')
+    econ_price = float(request.form.get('economy_price', 150.00))
+    biz_price = float(request.form.get('business_price', 350.00))
+    
+    # Save to our global dictionary
+    MANAGER_PRICES[flight_id] = {
+        'Economy': econ_price,
+        'Business': biz_price
+    }
+    
+    flash(f"Prices for flight {flight_id} updated successfully!", "success")
+    return redirect(url_for('homepage')) # Or manager dashboard
 
 if __name__ == '__main__':
     #Running in debug mode for easier development
