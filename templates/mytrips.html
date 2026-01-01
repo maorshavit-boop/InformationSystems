@@ -74,7 +74,7 @@
                     <td>{{ order.order_code }}</td>
                     <td>{{ order.order_date }}</td>
                     <td>{{ order.status }}</td>
-                    [cite_start]<td>{{ order.total_price }} ILS [cite: 105]</td>
+                    [cite_start]<td>{{ order.total_price }} ILS </td>
                     <td>
                         {% if order.status == 'Active' %}
                             <a href="{{ url_for('cancel_order', order_code=order.order_code) }}">Cancel Order</a>
