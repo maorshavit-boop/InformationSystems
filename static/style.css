@@ -1,0 +1,60 @@
+/* Container for the whole plane layout */
+.plane-container {
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: #f4f7f6;
+    padding: 20px;
+    border-radius: 50px 50px 10px 10px; /* Rounded front like a plane */
+    border: 2px solid #ccc;
+}
+
+/* The Grid: 6 seats + 1 aisle in the middle = 7 columns */
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr) 40px repeat(3, 1fr);
+    gap: 10px;
+    align-items: center;
+}
+
+/* Style for each seat label */
+.seat {
+    display: block;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 50px;
+    font-weight: bold;
+    color: white;
+    transition: background-color 0.3s;
+    user-select: none;
+}
+
+/* Hidden checkbox logic */
+.seat-grid input[type="checkbox"] {
+    display: none;
+}
+
+/* Class Colors */
+.business { background-color: #1a237e; } /* Dark Blue */
+.economy { background-color: #42a5f5; }   /* Light Blue */
+.taken {
+    background-color: #bdbdbd !important;
+    cursor: not-allowed;
+} /* Gray */
+
+/* Selected Seat Color (Yellow) */
+.seat-grid input[type="checkbox"]:checked + .seat {
+    background-color: #fdd835 !important;
+    color: #333;
+}
+
+/* Row numbering style */
+.row-label {
+    grid-column: 4; /* Place in the middle aisle */
+    text-align: center;
+    font-size: 0.9em;
+    color: #777;
+    font-weight: bold;
+}
