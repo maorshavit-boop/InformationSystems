@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FLYTAU - Book Your Flight</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" width="150">
+        <nav><a href="/">Back to Flights</a></nav>
+    </header>
+
+    <main>
+        <h2>Booking for Flight: {{ flight_id }}</h2>
+        <p>Route: {{ flight_info.source_airport }} to {{ flight_info.destination_airport }}</p>
+
+        <form action="/complete_booking" method="POST">
+            <input type="hidden" name="flight_id" value="{{ flight_id }}">
+
+            <section class="seat-selection">
+                <h3>Select Your Seats</h3>
+                <div class="seat-grid" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
+                    {% for seat in all_seats %}
+                        <div class="seat-item {{ 'taken' if seat.is_taken else 'available' }}">
+                            <input type="checkbox" name="selected_seats"
+                                   value="{{ seat.row_num }}-{{ seat.column_num }}-{{ seat.class_type }}-{{ flight_info.airplane_id }}"
+                                   {% if seat.is_taken %} disabled {% endif %}>
+                            <label>
+                                {{ seat.row_num }}{{ seat.column_num }}<br>
+                                <small>{{ seat.class_type }}</small>
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <hr>
+
+            <section class="customer-info">
+                {% if current_user.is_authenticated and current_user.user_type == 'Registered' %}
+                    <p>Booking as: <strong>{{ current_user.name }}</strong></p>
+                    [cite_start]<p>Your saved passport and details will be used automatically[cite: 15].</p>
+                {% else %}
+                    <h3>Guest Information</h3>
+                    [cite_start]<p>Please provide details to receive your booking code[cite: 15].</p>
+                    <input type="text" name="guest_first" placeholder="First Name" required>
+                    <input type="text" name="guest_last" placeholder="Last Name" required>
+                    <input type="email" name="guest_email" placeholder="Email Address" required>
+                    <input type="text" name="guest_phone" placeholder="Phone Number" required>
+                {% endif %}
+            </section>
+
+            <div class="pricing-summary">
+                <p>Economy Price: <strong>{{ econ_price }} ILS</strong></p>
+                <p>Business Price: <strong>{{ biz_price }} ILS</strong></p>
+            </div>
+
+            <button type="submit" class="confirm-btn">Confirm & Purchase</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>© 2026 FLYTAU Airlines. [cite_start]No real payment interface required[cite: 105].</p>
+    </footer>
+</body>
+</html>
