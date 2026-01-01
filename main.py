@@ -122,7 +122,7 @@ def complete_booking():
         flash(f"Booking failed: {message}", "danger")
         return redirect(url_for('book_flight', flight_id=flight_id))
 
-
+#maor maor
 @app.route('/logout')
 def logout():
     logout_user()
