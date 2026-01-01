@@ -129,7 +129,7 @@ def complete_booking():
 @app.route('/manager/set_price', methods=['POST'])
 @login_required
 def set_flights_price():
-    [cite_start]"""Allows managers to determine the price for a flight and class."""
+    """Allows managers to determine the price for a flight and class."""
     if current_user.user_type != 'Manager':
         flash("Unauthorized access", "danger")
         return redirect(url_for('homepage'))
