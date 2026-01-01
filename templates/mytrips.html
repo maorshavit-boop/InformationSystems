@@ -1,0 +1,94 @@
+<h2>My Trips</h2>
+
+{% if not current_user.is_authenticated %}
+    <section class="guest-search">
+        <h3>Find Your Booking</h3>
+        [cite_start]<p>Enter your unique order code and email to view active tickets.</p>
+        <form method="POST">
+            <input type="text" name="order_code" placeholder="Order Code" required>
+            <input type="email" name="email" placeholder="Your Email" required>
+            <button type="submit">View My Booking</button>
+        </form>
+    </section>
+{% endif %}
+
+<hr>
+
+{% if order_data %}
+    <section class="order-details">
+        <div class="order-summary">
+            <h3>Order Details: {{ order_data.info.order_code }}</h3>
+            <p>Status: <strong>{{ order_data.info.status }}</strong></p>
+            [cite_start]<p>Total Paid: <strong>{{ order_data.info.total_price }} ILS</strong> [cite: 105]</p>
+        </div>
+
+        <h4>Tickets in this order:</h4>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Flight</th>
+                    <th>Seat</th>
+                    <th>Class</th>
+                    <th>Route</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in order_data.tickets %}
+                <tr>
+                    <td>{{ ticket.flight_id }} ({{ ticket.departure_date }})</td>
+                    <td>Row {{ ticket.row_num }}, Col {{ ticket.column_num }}</td>
+                    <td>{{ ticket.class_type }}</td>
+                    <td>{{ ticket.source_airport }} -> {{ ticket.destination_airport }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if order_data.info.status == 'Active' %}
+            <p><a href="{{ url_for('cancel_order', order_code=order_data.info.order_code) }}"
+               onclick="return confirm('Are you sure? [cite_start]A 5% fee will apply.')">
+               Cancel Entire Booking
+            </a></p>
+        {% endif %}
+    </section>
+    <hr>
+{% endif %}
+
+{% if current_user.is_authenticated and current_user.user_type == 'Registered' %}
+    <section class="user-history">
+        <h3>Your Booking History</h3>
+        [cite_start]<p>Review your past and active orders[cite: 15].</p>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Order Code</th>
+                    <th>Date Ordered</th>
+                    <th>Status</th>
+                    <th>Total Price Paid</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_code }}</td>
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.status }}</td>
+                    [cite_start]<td>{{ order.total_price }} ILS [cite: 105]</td>
+                    <td>
+                        {% if order.status == 'Active' %}
+                            <a href="{{ url_for('cancel_order', order_code=order.order_code) }}">Cancel Order</a>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    [cite_start]<td colspan="5">No booking history found[cite: 15].</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endif %}

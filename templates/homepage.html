@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FLYTAU - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" width="120">
+        <nav>
+            <a href="/">Home</a> |
+            <a href="/mytrips">My Trips</a>
+        </nav>
+
+        <div class="auth-box">
+            {% if current_user.is_authenticated %}
+                <p>Welcome back, <strong>{{ current_user.name }}</strong>!</p>
+                <a href="/logout">Logout</a>
+            {% else %}
+                <form action="/login" method="POST">
+                    <input type="text" name="id_or_email" placeholder="Email or Manager ID" required>
+                    <input type="password" name="password" placeholder="Password" required>
+                    <button type="submit">Login</button>
+                </form>
+                <a href="/signup">Sign Up</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        <h1>Flight Schedule</h1>
+        <form action="/" method="GET" class="filter-form">
+            <input type="date" name="date">
+            <input type="text" name="source" placeholder="From (Airport)">
+            <input type="text" name="dest" placeholder="To (Airport)">
+            <button type="submit">Search Flights</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Flight ID</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in flights %}
+                <tr>
+                    <td>{{ flight.flight_id }}</td>
+                    <td>{{ flight.source_airport }}</td>
+                    <td>{{ flight.destination_airport }}</td>
+                    <td>{{ flight.departure_date }}</td>
+                    <td>{{ flight.departure_time }}</td>
+                    <td>
+                        {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
+                            <span style="color:red">Restricted</span>
+                        {% else %}
+                            <a href="{{ url_for('book_flight', flight_id=flight.flight_id) }}">
+                                <button type="button">Book Now</button>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
