@@ -286,6 +286,16 @@ def get_flight_seat_map(flight_id):
 
         return flight, seats_list
 
+# Global dictionary to store manager-defined prices. Structure: {'flight_id': {'Economy': price, 'Business': price}}
+MANAGER_PRICES = {}
+def get_current_price(flight_id, class_type):
+    """Retrieves the price set by manager or uses fallback values."""
+    if flight_id in MANAGER_PRICES and class_type in MANAGER_PRICES[flight_id]:
+        return MANAGER_PRICES[flight_id][class_type]
+    
+    # Fallback as requested: 150 for Economy, 350 for Business
+    return 350.00 if class_type == 'Business' else 150.00
+
 
 '''
 Need to think if the function below (create_booking is needed) is needed
