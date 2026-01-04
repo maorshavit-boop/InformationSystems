@@ -1,8 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 from utils import *
+import os
 
+# Get the path to the project root (one level up from 'code' folder)
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+app = Flask(__name__,
+            template_folder=os.path.join(project_root, 'templates'),
+            static_folder=os.path.join(project_root, 'static'))
+
+<<<<<<< HEAD
+=======
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
+>>>>>>> 19cb9ceac3a02af04f4fd0e3f4f41fe8fc7247f8
 app.secret_key = 'flytau_secret_key'
 
 @app.errorhandler(404)
@@ -34,28 +45,27 @@ def homepage():
 
 @app.route('/login', methods=['POST'])
 def login():
-    """Handles both Manager and Customer login."""
-    username = request.form.get('id_or_email')
-    password = request.form.get('password')
+    uid = request.form.get('id_or_email')
+    pwd = request.form.get('password')
 
     with db_cur() as cursor:
-        # [cite_start]Check Customer [cite: 80]
-        cursor.execute("SELECT email FROM Registered_Customers WHERE email=%s AND password=%s", (username, password))
-        if cursor.fetchone():
-            user = get_user_by_id(username)
-            login_user(user)
-            return redirect(url_for('homepage'))
+        # Check in Registered Customers
+        cursor.execute("SELECT email FROM Registered_Customers WHERE email=%s AND password=%s", (uid, pwd))
+        user_data = cursor.fetchone()
 
-        # [cite_start]Check Manager [cite: 16]
-        cursor.execute("SELECT manager_id FROM Managers WHERE manager_id=%s AND password=%s", (username, password))
-        # Note: Ensure you added a 'password' column to your Managers table if it's not in the original SQL
-        if cursor.fetchone():
-            user = get_user_by_id(username)
-            login_user(user)
-            return redirect(url_for('homepage'))
+        # Check in Managers if not found in customers
+        if not user_data:
+            cursor.execute("SELECT manager_id FROM Managers WHERE manager_id=%s AND password=%s", (uid, pwd))
+            user_data = cursor.fetchone()
 
-    flash('Invalid credentials')
-    return redirect(url_for('homepage'))
+        if user_data:
+            user_id = user_data.get('email') or user_data.get('manager_id')
+            login_user(get_user_by_id(user_id))
+            return redirect(url_for('homepage'))
+        else:
+            # This is the requirement: Flash message for incorrect details
+            flash('incorrect login details', 'danger')
+            return redirect(url_for('homepage'))
 
 
 @app.route('/signup', methods=['GET', 'POST'])
