@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>FLYTAU Booking</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href = "{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header>
@@ -37,7 +37,8 @@
                         
                         <label for="seat-{{ loop.index }}" 
                                class="seat {{ seat.class_type|lower }} {{ 'taken' if seat.is_taken }}">
-                            {{ seat.column_num|map_to_letter }} </label>
+                            {{ seat.column_num|map_to_letter }}
+                        </label>
                     </div>
                 {% endfor %}
             </div>
