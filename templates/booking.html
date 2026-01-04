@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>FLYTAU Booking</title>
-    <link rel="stylesheet" href = "{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header>
@@ -11,49 +11,40 @@
         <nav><a href="/">Back to Flights</a></nav>
     </header>
 
-   <main>
-    <div class="plane-container">
-        <h2 style="text-align: center;">Select Your Seats - Flight {{ flight_id }}</h2>
-        
-        <form action="/complete_booking" method="POST">
-            <input type="hidden" name="flight_id" value="{{ flight_id }}">
-            
-            <div class="seat-grid">
-                {% set last_row = namespace(value=0) %}
-                
-                {% for seat in all_seats %}
-                    {# Add row number in the aisle when a new row starts #}
-                    {% if seat.row_num != last_row.value %}
-                        {% if not loop.first %} {% endif %}
-                        <div class="row-label">{{ seat.row_num }}</div>
-                        {% set last_row.value = seat.row_num %}
-                    {% endif %}
+    <main>
+        <div class="plane-container">
+            <h2 style="text-align: center;">Select Your Seats - Flight {{ flight_id }}</h2>
 
-                    {# Seat Logic #}
-                    <div class="seat-wrapper">
-                        <input type="checkbox" id="seat-{{ loop.index }}" name="selected_seats" 
-                               value="{{ seat.row_num }}-{{ seat.column_num }}-{{ seat.class_type }}-{{ flight_info.airplane_id }}"
-                               {% if seat.is_taken %} disabled {% endif %}>
-                        
-                        <label for="seat-{{ loop.index }}" 
-                               class="seat {{ seat.class_type|lower }} {{ 'taken' if seat.is_taken }}">
-                            {{ seat.column_num|map_to_letter }}
-                        </label>
-                    </div>
-                {% endfor %}
-            </div>
+            <form action="/complete_booking" method="POST">
+                <input type="hidden" name="flight_id" value="{{ flight_id }}">
 
-            <div style="margin-top: 30px; text-align: center;">
-                <button type="submit" class="confirm-btn">Confirm Selection</button>
-            </div>
-        </form>
-    </div>
-</main>
+                <div class="seat-grid">
+                    {% for seat in all_seats %}
 
-    <footer>
-        <p>© 2026 FLYTAU Airlines. [cite_start]No real payment interface required[cite: 105].</p>
-    </footer>
+                        {# הזרקת מספר השורה למעבר האמצעי אחרי כיסא C (עמודה 3) #}
+                        {% if seat.column_num == 4 %}
+                            <div class="row-label">{{ seat.row_num }}</div>
+                        {% endif %}
+
+                        <div class="seat-wrapper">
+                            <input type="checkbox" id="seat-{{ loop.index }}"
+                                   name="selected_seats"
+                                   value="{{ seat.row_num }}-{{ seat.column_num }}-{{ seat.class_type }}-{{ flight_info.airplane_id }}"
+                                   {% if seat.is_taken %} disabled {% endif %}>
+
+                            <label for="seat-{{ loop.index }}"
+                                   class="seat {{ seat.class_type|lower }} {{ 'taken' if seat.is_taken }}">
+                                {{ seat.column_num|map_to_letter }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div style="margin-top: 30px; text-align: center;">
+                    <button type="submit" class="confirm-btn">Confirm Selection</button>
+                </div>
+            </form>
+        </div>
+    </main>
 </body>
-
 </html>
-
