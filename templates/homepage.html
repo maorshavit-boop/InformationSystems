@@ -15,7 +15,7 @@
 
         <div class="auth-box">
             {% if current_user.is_authenticated %}
-                <p>Welcome back, <strong>{{ current_user.name }}</strong>!</p>
+                <p>Welcome back, <strong>{{ current_user.first_name }}</strong>!</p>
                 <a href="/logout">Logout</a>
             {% else %}
                 <form action="/login" method="POST">
