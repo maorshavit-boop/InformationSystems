@@ -1,10 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>Order Summary - FLYTAU</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-$END$
+    <div class="container" style="max-width: 600px; margin: 50px auto; padding: 30px; border: 1px solid #ccc; border-radius: 10px;">
+        <h2 style="text-align: center;">Order Summary</h2>
+        <hr>
+        <h4>Flight Details</h4>
+        <p><strong>Flight:</strong> {{ flight.flight_id }}</p>
+        <p><strong>Route:</strong> {{ flight.source_airport }} to {{ flight.destination_airport }}</p>
+        <p><strong>Date:</strong> {{ flight.departure_date }} at {{ flight.departure_time }}</p>
+
+        <h4>Selected Seats</h4>
+        <ul>
+            {% for seat in seats %}
+                <li>Row {{ seat.row }}, Seat {{ seat.col }} ({{ seat.class }}) - ${{ seat.price }}</li>
+            {% endfor %}
+        </ul>
+
+        <h3 style="text-align: right; color: #1a237e;">Total Price: ${{ total }}</h3>
+
+        <form action="/finalize_booking" method="POST">
+            <input type="hidden" name="flight_id" value="{{ flight.flight_id }}">
+
+            {% for seat in seats %}
+                <input type="hidden" name="selected_seats" value="{{ seat.key }}">
+            {% endfor %}
+
+            {% if guest %}
+                <input type="hidden" name="guest_first" value="{{ guest.first_name }}">
+                <input type="hidden" name="guest_last" value="{{ guest.last_name }}">
+                <input type="hidden" name="guest_email" value="{{ guest.email }}">
+                <input type="hidden" name="guest_phone" value="{{ guest.phone }}">
+            {% endif %}
+
+            <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+                <a href="{{ url_for('book_flight', flight_id=flight.flight_id) }}"><button type="button" style="background:#6c757d; color:white;">Back to Seats</button></a>
+                <button type="submit" style="background:#28a745; color:white; padding: 10px 30px;">Pay & Confirm Order</button>
+            </div>
+        </form>
+    </div>
 </body>
 </html>

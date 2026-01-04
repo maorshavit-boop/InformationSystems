@@ -15,14 +15,26 @@
         <div class="plane-container">
             <h2 style="text-align: center;">Select Your Seats - Flight {{ flight_id }}</h2>
 
-            <form action="/complete_booking" method="POST">
+            <div class="legend-container">
+                <div class="legend-item"><div class="legend-box business"></div><span>Business</span></div>
+                <div class="legend-item"><div class="legend-box economy"></div><span>Economy</span></div>
+                <div class="legend-item"><div class="legend-box" style="background:#ffeb3b; border:1px solid #ddd;"></div><span>Selected</span></div>
+                <div class="legend-item"><div class="legend-box taken"></div><span>Taken</span></div>
+            </div>
+
+            <form action="/order_summary" method="POST">
                 <input type="hidden" name="flight_id" value="{{ flight_id }}">
 
                 <div class="seat-grid">
                     {% for seat in all_seats %}
 
-                        {# הזרקת מספר השורה למעבר האמצעי אחרי כיסא C (עמודה 3) #}
-                        {% if seat.column_num == 4 %}
+                        {# הזרקת מספר השורה בעמודה הרביעית (בדיוק במעבר המטוס) #}
+                        {% if loop.index0 % 6 == 3 or (seat.column_num|map_to_letter == 'D') %}
+                            {# אם האות היא D או האינדקס הוא 3, נשים את מספר השורה באמצע #}
+                        {% endif %}
+
+                        {# פתרון בטוח יותר: נבדוק אם הגענו למושב הרביעי בכל שורה (D) #}
+                        {% if seat.column_num|map_to_letter == 'D' %}
                             <div class="row-label">{{ seat.row_num }}</div>
                         {% endif %}
 
@@ -40,7 +52,16 @@
                     {% endfor %}
                 </div>
 
-                <div style="margin-top: 30px; text-align: center;">
+                {% if not current_user.is_authenticated %}
+                <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
+                    <h4>Guest Details</h4>
+                    <input type="text" name="guest_first" placeholder="First Name" required>
+                    <input type="text" name="guest_last" placeholder="Last Name" required>
+                    <input type="email" name="guest_email" placeholder="Email" required>
+                </div>
+                {% endif %}
+
+                <div style="text-align: center;">
                     <button type="submit" class="confirm-btn">Confirm Selection</button>
                 </div>
             </form>
