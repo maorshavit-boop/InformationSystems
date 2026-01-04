@@ -1,83 +1,52 @@
-/* Container for the whole plane layout */
-/* Container for the whole plane layout */
-/* מבנה המטוס */
 .plane-container {
-    max-width: 500px;
+    max-width: 550px;
     margin: 40px auto;
-    background-color: #f9f9f9;
+    background-color: #fff;
     padding: 40px;
-    border-radius: 100px 100px 20px 20px; /* צורה של חרטום מטוס */
-    border: 3px solid #d1d1d1;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 80px 80px 20px 20px;
+    border: 2px solid #ddd;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-/* הגריד: 3 מושבים + מעבר (40px) + 3 מושבים */
+/* גריד של 7 עמודות: 3 מושבים | מעבר | 3 מושבים */
 .seat-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr) 40px repeat(3, 1fr);
-    gap: 12px;
+    gap: 15px;
     align-items: center;
 }
 
-/* עיצוב המושב כריבוע */
 .seat {
     display: block;
     width: 45px;
     height: 45px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     text-align: center;
     line-height: 45px;
     font-weight: bold;
     color: white;
-    font-family: sans-serif;
-    transition: all 0.2s ease;
 }
 
-/* הסתרת ה-Checkbox המכוער */
-.seat-grid input[type="checkbox"] {
-    display: none;
-}
+/* הסתרת ה-checkbox הדיפולטיבי */
+.seat-grid input[type="checkbox"] { display: none; }
 
-/* צבעים לפי מחלקות (גווני כחול) */
-.business { background-color: #0d47a1; } /* כחול כהה */
+/* צבעים */
+.business { background-color: #1a237e; } /* כחול כהה */
 .economy { background-color: #2196f3; }  /* כחול בהיר */
+.taken { background-color: #ccc !important; cursor: not-allowed; } /* אפור */
 
-/* מושב תפוס (אפור) */
-.taken {
-    background-color: #e0e0e0 !important;
-    color: #9e9e9e;
-    cursor: not-allowed;
-}
-
-/* בחירת מושב (צהוב) */
-.seat-grid input[type="checkbox"]:checked + .seat {
+/* שינוי לצהוב בזמן בחירה */
+input[type="checkbox"]:checked + .seat {
     background-color: #ffeb3b !important;
-    color: #333;
-    transform: scale(1.1);
-    box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+    color: #000;
 }
 
-/* מספר השורה במעבר */
 .row-label {
-    grid-column: 4;
     text-align: center;
     font-weight: bold;
-    color: #0d47a1;
+    color: #555;
 }
-
-/* כפתור אישור */
-.confirm-btn {
-    background-color: #0d47a1;
-    color: white;
-    padding: 12px 30px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-}
-.confirm-btn:hover { background-color: #1565c0; }
 
 /* עיצוב כללי להודעות קופצות */
 .flash-container {
@@ -101,5 +70,3 @@
     background-color: #d4edda;
     border: 1px solid #c3e6cb;
 }
-
-
