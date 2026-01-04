@@ -90,20 +90,22 @@ def logout():
 
 @app.route('/book_flight/<string:flight_id>')
 def book_flight(flight_id):
-    #  Double Check managers can't order tickets
     if current_user.is_authenticated and current_user.user_type == 'Manager':
         flash("Managers cannot perform bookings.", "danger")
         return redirect(url_for('homepage'))
-    # Extracting the seat map
-    flight_data, seats = get_flight_seat_map(flight_id)
-    if not flight_data:
+
+    # חילוץ נתוני הטיסה והמושבים
+    flight_info, seats = get_flight_seat_map(flight_id)
+
+    if not flight_info:
         flash("Flight not found.", "danger")
         return redirect(url_for('homepage'))
 
+    # שליחת כל המשתנים הדרושים לטמפלייט
     return render_template('Flightseats.html',
                            flight_id=flight_id,
                            all_seats=seats,
-                           current_user=current_user)
+                           flight_info=flight_info)
 
 
 @app.route('/complete_booking', methods=['POST'])
