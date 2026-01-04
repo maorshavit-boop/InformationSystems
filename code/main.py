@@ -88,6 +88,16 @@ def logout():
     logout_user()
     return redirect(url_for('homepage'))
 
+@app.template_filter('map_to_letter')
+def map_to_letter(column_num):
+    # בדיקה למניעת ה-ValueError: אם זה כבר אות, פשוט תחזיר אותה
+    if isinstance(column_num, str) and not column_num.isdigit():
+        return column_num
+
+    mapping = {1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F'}
+    return mapping.get(int(column_num), column_num)
+
+
 @app.route('/book_flight/<string:flight_id>')
 def book_flight(flight_id):
     if current_user.is_authenticated and current_user.user_type == 'Manager':
@@ -101,8 +111,8 @@ def book_flight(flight_id):
         flash("Flight not found.", "danger")
         return redirect(url_for('homepage'))
 
-    # שליחת כל המשתנים הדרושים לטמפלייט
-    return render_template('Flightseats.html',
+    # שימוש ב-booking.html (במקום Flightseats.html)
+    return render_template('booking.html',
                            flight_id=flight_id,
                            all_seats=seats,
                            flight_info=flight_info)
