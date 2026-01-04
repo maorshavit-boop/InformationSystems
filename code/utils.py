@@ -127,17 +127,31 @@ def get_flights_with_filters(user_type, date=None, source=None, destination=None
 from datetime import datetime, timedelta
 
 
-def get_user_orders(email):
-    """Fetches all orders for a registered user, including flight details[cite: 15, 85]."""
+def get_customer_history(email):
+    """
+    Returns all orders for a specific user, including flight details (destination, date)
+    and total price. Groups tickets by order code.
+    """
     with db_cur() as cursor:
+        # Join Orders, Tickets, and Flights to get full context
         query = """
-            SELECT o.order_code, o.status, o.order_date, 
-                   SUM(t.price) as total_price, 
-                   COUNT(t.flight_id) as ticket_count
-            FROM Orders o
-            JOIN Flight_Tickets t ON o.order_code = t.order_code
-            WHERE o.email = %s
-            GROUP BY o.order_code
+            SELECT O.order_code, 
+                   O.status, 
+                   O.order_date, 
+                   F.flight_id,
+                   F.source_airport,
+                   F.destination_airport, 
+                   F.departure_date, 
+                   F.departure_time,
+                   SUM(FT.price) as total_price, 
+                   COUNT(FT.row_num) as ticket_count
+            FROM Orders O
+            JOIN Flight_Tickets FT ON O.order_code = FT.order_code
+            JOIN Flights F ON FT.flight_id = F.flight_id
+            WHERE O.email = %s
+            GROUP BY O.order_code, O.status, O.order_date, F.flight_id, 
+                     F.source_airport, F.destination_airport, F.departure_date, F.departure_time
+            ORDER BY O.order_date DESC
         """
         cursor.execute(query, (email,))
         return cursor.fetchall()
@@ -180,37 +194,59 @@ def get_order_by_code(order_code, email):
             'tickets': tickets
         }
 
-def cancel_order_logic(order_code):
+def cancel_order_transaction(order_code):
+    """
+    Executes order cancellation:
+    1. Checks if more than 36 hours remain before the flight.
+    2. Calculates a 5% cancellation fee.
+    3. Updates the order status and ticket prices in the DB.
+    """
     with db_cur() as cursor:
-        # Get total price and flight time
-        query = """
-            SELECT f.departure_date, f.departure_time, SUM(t.price) as total_price
-            FROM Flight_Tickets t
-            JOIN Flights f ON t.flight_id = f.flight_id
-            WHERE t.order_code = %s
-            GROUP BY f.departure_date, f.departure_time
+        # 1. Fetch flight details and current total price
+        # Using JOINs to link the Order to its Flight details
+        query_check = """
+            SELECT F.departure_date, F.departure_time, SUM(FT.price) as current_total
+            FROM Orders O
+            JOIN Flight_Tickets FT ON O.order_code = FT.order_code
+            JOIN Flights F ON FT.flight_id = F.flight_id
+            WHERE O.order_code = %s
+            GROUP BY F.departure_date, F.departure_time
         """
-        cursor.execute(query, (order_code,))
+        cursor.execute(query_check, (order_code,))
         res = cursor.fetchone()
-
-        if not res: return "Order not found"
-
-        # Check 36h rule
+        
+        if not res:
+            return False, "Order not found."
+            
+        # Combine date and time objects for comparison
         flight_dt = datetime.combine(res['departure_date'], (datetime.min + res['departure_time']).time())
-        if datetime.now() + timedelta(hours=36) > flight_dt:
-            return "Cancellation only allowed up to 36 hours before flight"
-
-        # Calculate 5% fee: $Fee = Total \times 0.05$
-        cancellation_fee = float(res['total_price']) * 0.05
-
-        # Update Order Status
-        cursor.execute("UPDATE Orders SET status = 'Cancelled by customer' WHERE order_code = %s", (order_code,))
-
-        # Update price to reflect only the fee paid
-        cursor.execute(
-            "UPDATE Flight_Tickets SET price = %s / (SELECT COUNT(*) FROM Flight_Tickets WHERE order_code = %s) WHERE order_code = %s",
-            (cancellation_fee, order_code, order_code))
-        return True
+        limit_time = datetime.now() + timedelta(hours=36)
+        
+        # Check if the cancellation window has passed (less than 36 hours)
+        if limit_time > flight_dt:
+            return False, "Cancellation is only allowed up to 36 hours before the flight."
+            
+        # 2. Calculate the new price (Cancellation Fee = 5% of total)
+        original_price = float(res['current_total'])
+        cancellation_fee = original_price * 0.05
+        
+        try:
+            # 3. Update Database
+            # Update status in Orders table
+            cursor.execute("UPDATE Orders SET status = 'Cancelled by customer' WHERE order_code = %s", (order_code,))
+            
+            # Update ticket prices to reflect the refund (split the fee among tickets)
+            # This ensures financial reports remain accurate
+            cursor.execute("""
+                UPDATE Flight_Tickets 
+                SET price = %s / (SELECT count FROM (SELECT COUNT(*) as count FROM Flight_Tickets WHERE order_code = %s) as tmp)
+                WHERE order_code = %s
+            """, (cancellation_fee, order_code, order_code))
+            
+            return True, f"Order cancelled. You were charged a 5% fee (${cancellation_fee:.2f})."
+            
+        except Exception as e:
+            return False, f"Database error: {e}"
 
 
 def get_flight_details(flight_id):
