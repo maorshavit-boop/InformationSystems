@@ -159,6 +159,33 @@ def set_flights_price():
     flash(f"Prices for flight {flight_id} updated successfully!", "success")
     return redirect(url_for('homepage')) # Or manager dashboard
 
+@app.route('/mytrips')
+@login_required
+def my_trips():
+    """Displays the order history for the registered user."""
+    # Ensure only registered users can access this page
+    if current_user.user_type != 'Registered':
+        flash("Only registered customers have a saved history.", "warning")
+        return redirect(url_for('homepage'))
+        
+    # Fetch data using the utility function
+    orders = get_customer_history(current_user.email)
+    return render_template('mytrips.html', orders=orders)
+
+
+@app.route('/cancel_order/<string:order_code>', methods=['POST'])
+@login_required
+def cancel_order(order_code):
+    """Executes the cancellation action when the user clicks the button."""
+    success, message = cancel_order_transaction(order_code)
+    
+    if success:
+        flash(message, "success")
+    else:
+        flash(message, "danger")
+        
+    return redirect(url_for('my_trips'))
+
 if __name__ == '__main__':
     #Running in debug mode for easier development
     app.run(debug=True)
