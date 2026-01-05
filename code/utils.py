@@ -5,7 +5,7 @@ from flask_login import UserMixin
 import mysql.connector
 from contextlib import contextmanager
 
-# Configuration for your database connection
+# Configuration for database connection
 db_config = {
     "host": "localhost",
     "user": "root",
