@@ -13,15 +13,14 @@ db_config = {
     "database": "FLYTAU",
     "autocommit": True
 }
-
+#Context manager to handle database connection and cursor lifecycle.
 @contextmanager
 def db_cur():
-    """Context manager to handle database connection and cursor lifecycle."""
     mydb = None
     cursor = None
     try:
         mydb = mysql.connector.connect(**db_config)
-        cursor = mydb.cursor(dictionary=True) # dictionary=True makes results easier to handle in Flask
+        cursor = mydb.cursor(dictionary=True)
         yield cursor
     except mysql.connector.Error as err:
         print(f"Database Error: {err}")
@@ -47,27 +46,21 @@ def seed_seats():
                 classes = [('Economy', 20, 6)]
 
             for class_type, rows_count, cols_count in classes:
-                # הכנסת המחלקה
                 cursor.execute("""
                     INSERT IGNORE INTO Airplane_Classes (class_type, airplane_id, rows_count, columns_count)
                     VALUES (%s, %s, %s, %s)
                 """, (class_type, plane['airplane_id'], rows_count, cols_count))
-
-                # יצירת מושבים בטווח שורות רציף
                 for r in range(current_row_start, current_row_start + rows_count):
                     for c in range(1, cols_count + 1):
                         cursor.execute("""
                             INSERT IGNORE INTO Seats (row_num, column_num, class_type, airplane_id)
                             VALUES (%s, %s, %s, %s)
                         """, (r, c, class_type, plane['airplane_id']))
-
-                # עדכון השורה הבאה שתתחיל אחרי המחלקה הנוכחית
                 current_row_start += rows_count
 
 
 def seed_full_database():
     with db_cur() as cursor:
-        # 1. יצירת מטוסים (כפי שמופיע בסקריפט ה-SQL שלך)
         airplanes = [
             ('AP-BIG-1', 'Boeing', '2018-05-01', 'Big'),
             ('AP-SML-1', 'Airbus', '2019-08-20', 'Small')
@@ -102,13 +95,9 @@ def register_new_customer(data):
     """
     with db_cur() as cursor:
         try:
-            # Check if user already exists
             cursor.execute("SELECT email FROM Registered_Customers WHERE email = %s", (data['email'],))
             if cursor.fetchone():
                 return False, "Email already registered."
-
-            # [cite_start]Insert into Registered_Customers
-            # Registration date is set to current date automatically
             insert_cust = """
                 INSERT INTO Registered_Customers 
                 (email, first_name, middle_name, last_name, passport_num, registration_date, birth_date, password, customer_type)
@@ -119,11 +108,8 @@ def register_new_customer(data):
                 data['last_name'], data['passport_num'], data['birth_date'],
                 data['password']
             ))
-
-            # [cite_start]Insert into Customer_Phones [cite: 13]
             insert_phone = "INSERT INTO Customer_Phones (phone_num, email, customer_type) VALUES (%s, %s, 'Registered')"
             cursor.execute(insert_phone, (data['phone'], data['email']))
-
             return True, "Account created successfully!"
         except Exception as e:
             print(f"Signup error: {e}")
@@ -132,9 +118,7 @@ def register_new_customer(data):
 
 def get_flights_with_filters(user_type, date=None, source=None, destination=None):
     """
-    Fetch flights with logic based on user type:
-    - Customers/Guests: Only 'Active' flights.
-    - Managers: All flights including cancelled/past.
+returns fights by users filters
     """
     with db_cur() as cursor:
         if user_type == 'Manager':
@@ -163,10 +147,9 @@ from datetime import datetime, timedelta
 def get_customer_history(email):
     """
     Returns all orders for a specific user, including flight details (destination, date)
-    and total price. Groups tickets by order code.
+    and total price.
     """
     with db_cur() as cursor:
-        # Join Orders, Tickets, and Flights to get full context
         query = """
             SELECT O.order_code, 
                    O.status, 
@@ -197,7 +180,6 @@ def get_order_by_code(order_code, email):
     Returns a dictionary with 'info' (order data) and 'tickets' (list of tickets).
     """
     with db_cur() as cursor:
-        # 1. Fetch overall order status and total price using SUM
         query_order = """
             SELECT o.order_code, o.status, o.order_date, SUM(t.price) as total_price
             FROM Orders o
@@ -210,8 +192,6 @@ def get_order_by_code(order_code, email):
 
         if not order_info:
             return None
-
-        # 2. Fetch details for each individual ticket in this order
         query_tickets = """
             SELECT t.flight_id, t.row_num, t.column_num, t.class_type, t.price,
                    f.departure_date, f.departure_time, f.source_airport, f.destination_airport
@@ -235,8 +215,6 @@ def cancel_order_transaction(order_code):
     3. Updates the order status and ticket prices in the DB.
     """
     with db_cur() as cursor:
-        # 1. Fetch flight details and current total price
-        # Using JOINs to link the Order to its Flight details
         query_check = """
             SELECT F.departure_date, F.departure_time, SUM(FT.price) as current_total
             FROM Orders O
@@ -250,26 +228,15 @@ def cancel_order_transaction(order_code):
         
         if not res:
             return False, "Order not found."
-            
-        # Combine date and time objects for comparison
         flight_dt = datetime.combine(res['departure_date'], (datetime.min + res['departure_time']).time())
         limit_time = datetime.now() + timedelta(hours=36)
-        
-        # Check if the cancellation window has passed (less than 36 hours)
         if limit_time > flight_dt:
             return False, "Cancellation is only allowed up to 36 hours before the flight."
-            
-        # 2. Calculate the new price (Cancellation Fee = 5% of total)
         original_price = float(res['current_total'])
         cancellation_fee = original_price * 0.05
         
         try:
-            # 3. Update Database
-            # Update status in Orders table
             cursor.execute("UPDATE Orders SET status = 'Cancelled by customer' WHERE order_code = %s", (order_code,))
-            
-            # Update ticket prices to reflect the refund (split the fee among tickets)
-            # This ensures financial reports remain accurate
             cursor.execute("""
                 UPDATE Flight_Tickets 
                 SET price = %s / (SELECT count FROM (SELECT COUNT(*) as count FROM Flight_Tickets WHERE order_code = %s) as tmp)
@@ -295,13 +262,9 @@ def get_seats_for_flight(flight_id):
     and checks if they are already occupied.
     """
     with db_cur() as cursor:
-        # Get the airplane_id for this flight
         cursor.execute("SELECT airplane_id FROM Flights WHERE flight_id = %s", (flight_id,))
         flight = cursor.fetchone()
         if not flight: return []
-
-        # Join Seats with Flight_Tickets to check occupancy
-        # If a ticket exists for this seat/flight combo, is_taken is 1 (True)
         query = """
             SELECT s.row_num, s.column_num, s.class_type,
                    CASE WHEN t.order_code IS NOT NULL THEN 1 ELSE 0 END AS is_taken
@@ -319,9 +282,8 @@ def get_seats_for_flight(flight_id):
 
 
 def get_flight_seat_map(flight_id):
-    """שליפת נתוני טיסה ומיפוי מושבים מלא כולל מחלקות ותפוסה"""
+    """Returns flight details and seat map"""
     with db_cur() as cursor:
-        # 1. שליפת נתוני הטיסה והמטוס
         query_flight = """
             SELECT f.*, a.size, a.airplane_id 
             FROM Flights f 
@@ -333,8 +295,6 @@ def get_flight_seat_map(flight_id):
 
         if not flight:
             return None, []
-
-        # 2. שליפת כל המושבים המשויכים למטוס של הטיסה הזו, כולל סימון אם הם תפוסים בטיסה הספציפית
         query_seats = """
             SELECT s.row_num, s.column_num, s.class_type,
                    CASE WHEN t.order_code IS NOT NULL THEN 1 ELSE 0 END AS is_taken
@@ -352,50 +312,39 @@ def get_flight_seat_map(flight_id):
 
         return flight, seats_list
 
-
-# Global dictionary to store manager-defined prices. Structure: {'flight_id': {'Economy': price, 'Business': price}}
 MANAGER_PRICES = {}
+
+#NEED TO CHECK ABOUT FALLBACK VALUES!!
 def get_current_price(flight_id, class_type):
     """Retrieves the price set by manager or uses fallback values."""
     if flight_id in MANAGER_PRICES and class_type in MANAGER_PRICES[flight_id]:
         return MANAGER_PRICES[flight_id][class_type]
-    
-    # Fallback as requested: 150 for Economy, 350 for Business
     return 350.00 if class_type == 'Business' else 150.00
 
 
+#Creates a booking
 def create_booking(flight_id, selected_seats, user, guest_data=None):
     with db_cur() as cursor:
         try:
-            # [cite_start]1. יצירת קוד הזמנה ייחודי
             order_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-
-            # [cite_start]2. זיהוי הלקוח (רשום או אורח)
             if user.is_authenticated:
                 email = user.id
                 customer_type = 'Registered'
             else:
                 email = guest_data['email']
                 customer_type = 'Unregistered'
-                # הכנסה לטבלת אורחים אם לא קיים
                 cursor.execute(
                     "INSERT IGNORE INTO Unregistered_Customers (email, first_name, last_name, customer_type) VALUES (%s, %s, %s, %s)",
                     (email, guest_data['first_name'], guest_data['last_name'], customer_type))
-
-            # [cite_start]3. יצירת ההזמנה הראשית [cite: 43]
             cursor.execute("""
                 INSERT INTO Orders (order_code, email, status, order_date, customer_type)
                 VALUES (%s, %s, 'Active', CURDATE(), %s)
             """, (order_code, email, customer_type))
-
-            # [cite_start]4. הכנסת כרטיסים (אחד לכל מושב שנבחר) [cite: 41]
             for seat_key in selected_seats:
-                # פורמט מצופה מה-HTML: "row-col-class-airplane_id"
                 row, col, s_class, airplane_id = seat_key.split('-')
 
-                # [cite_start]קביעת מחיר (מנהל או Fallback) [cite: 38]
+                # NEED TO CHECK THE FALLBACK VALUES
                 price = 350.00 if s_class == 'Business' else 150.00
-
                 cursor.execute("""
                     INSERT INTO Flight_Tickets (order_code, flight_id, row_num, column_num, class_type, airplane_id, price)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -410,7 +359,6 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
 class Worker:
     """
     Base class for all employees (Pilots, Flight Attendants, Managers).
-    Maps to common columns: first_name, middle_name, last_name, city, street, house_num, start_date.
     """
     def __init__(self, first_name, middle_name, last_name, city, street, house_num, start_date):
         self.first_name = first_name
@@ -432,29 +380,28 @@ class Worker:
 
 class Pilot(Worker):
     """
-    Maps to 'Pilots' table[cite: 10].
-    Unique columns: pilot_id, long_flight_training.
+    Maps to 'Pilots' table.
     """
     def __init__(self, pilot_id, first_name, middle_name, last_name, city, street, house_num, start_date, long_flight_training):
         super().__init__(first_name, middle_name, last_name, city, street, house_num, start_date)
         self.id = pilot_id
-        # In SQL this is BOOLEAN/TINYINT (0 or 1)
         self.long_flight_training = True if long_flight_training else False
 
+#Returns the workers role
     def get_role(self):
         return "Pilot"
 
 
 class FlightAttendant(Worker):
     """
-    Maps to 'Flight_Attendants' table[cite: 22].
-    Unique columns: attendant_id, long_flight_training.
+    Maps to 'Flight_Attendants' table.
     """
     def __init__(self, attendant_id, first_name, middle_name, last_name, city, street, house_num, start_date, long_flight_training):
         super().__init__(first_name, middle_name, last_name, city, street, house_num, start_date)
         self.id = attendant_id
         self.long_flight_training = True if long_flight_training else False
 
+    # Returns the workers role
     def get_role(self):
         return "Flight Attendant"
 
@@ -471,6 +418,7 @@ class Manager(Worker, UserMixin):
         self.password = password
         self.user_type = 'Manager'
 
+    # Returns the workers role
     def get_role(self):
         return "Manager"
 
@@ -538,12 +486,10 @@ def get_all_managers(manager_id):
             )
     return None
 
-
+#NEED TO CHECK WHY ID AND EMAIL!!!
 class User(UserMixin):
     """
-    מחלקת בסיס המייצגת משתמש כללי במערכת.
-    מכילה את השדות המשותפים לכולם: אימייל, שם פרטי, שם אמצעי ושם משפחה.
-    משמשת גם עבור אורחים (Guests) וגם כבסיס למשתמשים רשומים.
+Class that represents unregistered user table
     """
     def __init__(self, email, first_name, last_name, middle_name=None):
         self.id = email  
@@ -553,6 +499,7 @@ class User(UserMixin):
         self.middle_name = middle_name
         self.user_type = 'Guest' 
 
+#Returns full name
     def get_full_name(self):
         if self.middle_name:
             return f"{self.first_name} {self.middle_name} {self.last_name}"
@@ -561,8 +508,7 @@ class User(UserMixin):
 
 class RegisteredUser(User):
     """
-    מחלקה המייצגת לקוח רשום (reg_user).
-    יורשת מ-User ומוסיפה שדות ייחודיים ללקוח רשום: דרכון, תאריך לידה, סיסמה, תאריך הרשמה.
+Class of registered users, inherits from user class
     """
     def __init__(self, email, first_name, last_name, passport_num, birth_date, password, registration_date, middle_name=None):
         super().__init__(email, first_name, last_name, middle_name)        
@@ -574,16 +520,13 @@ class RegisteredUser(User):
 
 def get_user_by_id(user_id):
     """
-    פונקציה שטוענת משתמש (רשום או מנהל) עבור Flask-Login.
+  Returns registered user or manager with given user id.
     """
     with db_cur() as cursor:
-        # 1. בדיקה אם המשתמש הוא לקוח רשום
-        # שימו לב: אנחנו שולפים את כל הפרטים כדי ליצור אובייקט RegisteredUser מלא
         cursor.execute("SELECT * FROM Registered_Customers WHERE email = %s", (user_id,))
         res = cursor.fetchone()
         
         if res:
-            # יצירת אובייקט מהמחלקה החדשה שבנינו
             return RegisteredUser(
                 email=res['email'],
                 first_name=res['first_name'],
@@ -594,14 +537,10 @@ def get_user_by_id(user_id):
                 password=res['password'],
                 registration_date=res['registration_date']
             )
-
-        # 2. בדיקה אם המשתמש הוא מנהל (משתמשים במחלקה שיצרנו קודם)
-        # שימו לב: הנחת העבודה היא שהוספתם עמודת password למנהלים כפי שסוכם
         cursor.execute("SELECT * FROM Managers WHERE manager_id = %s", (user_id,))
         res = cursor.fetchone()
         
         if res:
-            # שימוש במחלקת Manager שיצרנו בשלבים הקודמים
             return Manager(
                 manager_id=res['manager_id'],
                 first_name=res['first_name'],
@@ -619,19 +558,17 @@ def get_user_by_id(user_id):
 
 class FlightRoute:
     """
-    Maps to 'Flight_Routes' table.
-    PK: source_airport, destination_airport
+    Maps to Flight Routes table.
     """
     def __init__(self, source_airport, destination_airport, flight_duration):
         self.source_airport = source_airport
         self.destination_airport = destination_airport
-        self.flight_duration = flight_duration  # In minutes
+        self.flight_duration = flight_duration
 
 
 class Flight:
     """
-    Maps to 'Flights' table.
-    PK: flight_id, departure_date
+    Maps to Flights table.
     """
     def __init__(self, flight_id, departure_date, airplane_id, source_airport, 
                  destination_airport, status, departure_time, runway_num):
@@ -640,7 +577,7 @@ class Flight:
         self.airplane_id = airplane_id
         self.source_airport = source_airport
         self.destination_airport = destination_airport
-        self.status = status  # Enum: Active, Full Capacity, Arrived, Cancelled
+        self.status = status
         self.departure_time = departure_time
         self.runway_num = runway_num
 
@@ -651,38 +588,36 @@ class Flight:
 
 class Order:
     """
-    Maps to 'Orders' table.
-    PK: order_code
-    Includes logic for customer type (Registered/Unregistered).
+    Maps to Orders table.
     """
     def __init__(self, order_code, email, status, order_date, customer_type):
         self.order_code = order_code
         self.email = email
-        self.status = status  # Enum: Active, Executed, Cancelled by...
+        self.status = status
         self.order_date = order_date
-        self.customer_type = customer_type  # 'Registered' or 'Unregistered'
+        self.customer_type = customer_type
 
 
 class Ticket:
     """
-    Maps to 'Flight_Tickets' table.
-    Represents a specific seat on a specific flight within an order.
+    Maps to Flight Tickets table.
     """
     def __init__(self, order_code, flight_id, row_num, column_num, class_type, airplane_id, price):
         self.order_code = order_code
         self.flight_id = flight_id
         self.row_num = row_num
         self.column_num = column_num
-        self.class_type = class_type  # 'Economy' or 'Business'
+        self.class_type = class_type
         self.airplane_id = airplane_id
         self.price = price
 
+#returns a string of the seat number
     def get_seat_code(self):
         return f"{self.row_num}{self.column_num}"
 
 def get_all_flights():
     """
-    שולף את כל הטיסות ומחזיר אותן כאובייקטים מסוג Flight.
+   Retrieves all flights from database and returns as flight objects
     """
     flights_obj_list = []
     with db_cur() as cursor:
@@ -706,10 +641,9 @@ def get_all_flights():
 
 def get_all_flight_routes(self):
     """
-    Retrieves all flight routes from the database.
+    Retrieves all flight routes from the database and returns as flight route objects
     """
     routes = []
-    # Explicitly selecting columns ensures the mapping below is always correct
     query = "SELECT source_airport, destination_airport, flight_duration FROM Flight_Routes"
     self.cursor.execute(query)
     
@@ -725,53 +659,52 @@ def get_all_flight_routes(self):
 
 def get_all_orders(self):
     """
-    Retrieves all orders from the database.
+    Retrieves all orders from the database and returns as  order objects.
     """
-    orders = []
     query = "SELECT order_code, email, status, order_date, customer_type FROM Orders"
     self.cursor.execute(query)
-    
+
+    orders = []
     for row in self.cursor.fetchall():
-        order = {
-            "order_code": row[0],
-            "email": row[1],
-            "status": row[2],       # This will be 'Active', 'Executed', etc.
-            "order_date": row[3],
-            "customer_type": row[4] # 'Registered' or 'Unregistered'
-        }
-        orders.append(order)
-        
+        new_order = Order(
+            order_code=row[0],
+            email=row[1],
+            status=row[2],
+            order_date=row[3],
+            customer_type=row[4]
+        )
+        orders.append(new_order)
+
     return orders
 
 def get_all_tickets(self):
     """
-    Retrieves all flight tickets from the database.
+    Retrieves all flight tickets from the database and returns as ticket objects.
     """
-    tickets = []
     query = """
     SELECT order_code, flight_id, row_num, column_num, class_type, airplane_id, price 
     FROM Flight_Tickets
     """
     self.cursor.execute(query)
-    
+
+    tickets = []
     for row in self.cursor.fetchall():
-        ticket = {
-            "order_code": row[0],
-            "flight_id": row[1],
-            "row_num": row[2],
-            "column_num": row[3],
-            "class_type": row[4],  # 'Economy' or 'Business'
-            "airplane_id": row[5],
-            "price": float(row[6]) if row[6] is not None else 0.0 # Convert Decimal to float for Python handling
-        }
-        tickets.append(ticket)
-        
+        new_ticket = Ticket(
+            order_code=row[0],
+            flight_id=row[1],
+            row_num=row[2],
+            column_num=row[3],
+            class_type=row[4],
+            airplane_id=row[5],
+            price=float(row[6]) if row[6] is not None else 0.0
+        )
+        tickets.append(new_ticket)
+
     return tickets
 
 class Airplane:
     """
-    Maps to 'Airplanes' table.
-    PK: airplane_id
+    Maps to Airplanes table.
     """
     def __init__(self, airplane_id, manufacturer, purchase_date, size):
         self.airplane_id = airplane_id
@@ -785,11 +718,10 @@ class Airplane:
 
 class AirplaneClass:
     """
-    Maps to 'Airplane_Classes' table.
-    PK: (class_type, airplane_id)
+    Maps to Airplane Classes table.
     """
     def __init__(self, class_type, airplane_id, columns_count, rows_count):
-        self.class_type = class_type  # Enum: 'Economy', 'Business'
+        self.class_type = class_type
         self.airplane_id = airplane_id
         self.columns_count = columns_count
         self.rows_count = rows_count
@@ -800,8 +732,7 @@ class AirplaneClass:
 
 class Seat:
     """
-    Maps to 'Seats' table.
-    PK: (row_num, column_num, class_type, airplane_id)
+    Maps to Seats table.
     """
     def __init__(self, row_num, column_num, class_type, airplane_id):
         self.row_num = row_num
@@ -814,41 +745,41 @@ class Seat:
 
 def get_all_airplanes(self):
     """
-    Retrieves all airplanes from the database.
+    Retrieves all airplanes from the database and returns as airplane object.
     """
     airplanes = []
-    # Explicitly selecting columns to match the dictionary below
     query = "SELECT airplane_id, manufacturer, purchase_date, size FROM Airplanes"
     self.cursor.execute(query)
-    
+
     for row in self.cursor.fetchall():
-        airplane = {
-            "airplane_id": row[0],
-            "manufacturer": row[1],
-            "purchase_date": row[2],
-            "size": row[3]  # 'Small' or 'Big'
-        }
-        airplanes.append(airplane)
-        
+        # CAUTION: Ensure you have an 'Airplane' class defined that accepts these arguments
+        new_airplane = Airplane(
+            airplane_id=row[0],
+            manufacturer=row[1],
+            purchase_date=row[2],
+            size=row[3]
+        )
+        airplanes.append(new_airplane)
+
     return airplanes
 
 def get_all_airplane_classes(self):
     """
-    Retrieves all airplane class configurations from the database.
+    Retrieves all airplane class  from the database and returns as objects.
     """
     classes = []
     query = "SELECT class_type, airplane_id, columns_count, rows_count FROM Airplane_Classes"
     self.cursor.execute(query)
-    
+
     for row in self.cursor.fetchall():
-        a_class = {
-            "class_type": row[0],     # 'Economy' or 'Business'
-            "airplane_id": row[1],
-            "columns_count": row[2],
-            "rows_count": row[3]
-        }
-        classes.append(a_class)
-        
+        new_class = AirplaneClass(
+            class_type=row[0],
+            airplane_id=row[1],
+            columns_count=row[2],
+            rows_count=row[3]
+        )
+        classes.append(new_class)
+
     return classes
 
 def get_all_seats(self):
@@ -858,14 +789,15 @@ def get_all_seats(self):
     seats = []
     query = "SELECT row_num, column_num, class_type, airplane_id FROM Seats"
     self.cursor.execute(query)
-    
+
     for row in self.cursor.fetchall():
-        seat = {
-            "row_num": row[0],
-            "column_num": row[1],
-            "class_type": row[2],   # 'Economy' or 'Business'
-            "airplane_id": row[3]
-        }
-        seats.append(seat)
-        
+        # Check that your Seat class __init__ arguments match this order
+        new_seat = Seat(
+            row_num=row[0],
+            column_num=row[1],
+            class_type=row[2],
+            airplane_id=row[3]
+        )
+        seats.append(new_seat)
+
     return seats
