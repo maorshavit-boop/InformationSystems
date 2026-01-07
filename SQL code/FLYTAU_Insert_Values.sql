@@ -1,285 +1,232 @@
--- ===================================================
--- 2. Data Population (Inserts)
--- ===================================================
+USE FLYTAU;
 
--- --- Pilots (22 pilots) ---
-INSERT INTO Pilots VALUES 
-('P001', 'Yotam', 'David', 'Cohen', 'Tel Aviv', 'Rothschild', '10', '2015-01-01', TRUE),
-('P002', 'Noa', 'Sarah', 'Levi', 'Haifa', 'Herzl', '22', '2016-05-15', TRUE),
-('P003', 'Ido', 'Moshe', 'Mizrahi', 'Eilat', 'Hatemarim', '5', '2018-02-20', FALSE),
-('P004', 'Dana', 'Ruth', 'Peretz', 'Jerusalem', 'Jaffa', '101', '2019-11-10', FALSE),
-('P005', 'Guy', 'Omer', 'Azulai', 'Rishon', 'Jabotinsky', '44', '2010-06-30', TRUE),
-('P006', 'Roni', 'Michal', 'Friedman', 'Tel Aviv', 'Dizengoff', '150', '2021-01-01', FALSE),
-('P007', 'Eyal', 'Haim', 'Golan', 'Rehovot', 'Herzl', '12', '2014-08-14', TRUE),
-('P008', 'Tamar', 'Yael', 'Katz', 'Givatayim', 'Katznelson', '3', '2017-03-22', TRUE),
-('P009', 'Omer', 'Adam', 'Biton', 'Tel Aviv', 'Allenby', '99', '2020-09-09', FALSE),
-('P010', 'Shira', 'Lea', 'Shapira', 'Haifa', 'Moriah', '70', '2012-12-12', TRUE),
-('P011', 'Doron', 'Avi', 'Sason', 'Holon', 'Kugel', '88', '2016-04-01', TRUE),
-('P012', 'Maya', 'Tali', 'Dagan', 'Raanana', 'Ahuza', '11', '2019-07-20', FALSE),
-('P013', 'Alon', 'Ben', 'Barak', 'Kfar Saba', 'Weizman', '200', '2015-11-11', TRUE),
-('P014', 'Neta', 'Or', 'Hadad', 'Bat Yam', 'Yoseftal', '13', '2022-02-02', FALSE),
-('P015', 'Uri', 'Ziv', 'Peleg', 'Herzliya', 'Sokolov', '55', '2013-03-30', TRUE),
-('P016', 'Gal', 'Ran', 'Sofer', 'Hadera', 'Hanassi', '4', '2020-10-10', FALSE),
-('P017', 'Keren', 'Shir', 'Lavi', 'Netanya', 'Herzl', '9', '2018-01-25', TRUE),
-('P018', 'Yair', 'Dan', 'Lapid', 'Tel Aviv', 'Bograshov', '10', '2011-06-15', TRUE),
-('P019', 'Lior', 'Tal', 'Raz', 'Ramat Hasharon', 'Ussishkin', '21', '2021-05-05', FALSE),
-('P020', 'Adi', 'Mor', 'Ashkenazi', 'Givatayim', 'Ben Gurion', '33', '2017-09-18', TRUE),
-('P021', 'Tom', 'Cruise', 'Topgun', 'Haifa', 'Sky', '1', '2010-01-01', TRUE),
-('P022', 'Maverick', 'Pete', 'Mitchell', 'Eilat', 'Desert', '2', '2015-05-05', TRUE);
+INSERT INTO Flight_Routes (source_airport, destination_airport, flight_duration) VALUES
+('TLV', 'JFK', 660), ('JFK', 'TLV', 630),
+('TLV', 'LHR', 330), ('TLV', 'ETM', 45),
+('TLV', 'CDG', 290), ('TLV', 'BKK', 660), 
+('TLV', 'DXB', 180), ('TLV', 'FCO', 240);
 
-INSERT INTO Pilot_Phones VALUES 
-('050-1111111', 'P001'), ('052-2222222', 'P002'), ('054-3333333', 'P003'),
-('050-4444444', 'P004'), ('052-5555555', 'P005'), ('050-6666666', 'P006');
+-- --- Airplanes (6 Planes as requested) ---
+INSERT INTO Airplanes (airplane_id, manufacturer, purchase_date, size) VALUES
+('AP-B787-1', 'Boeing', '2020-01-01', 'Big'),
+('AP-B737-2', 'Boeing', '2019-05-15', 'Small'),
+('AP-A380-3', 'Airbus', '2021-11-20', 'Big'),
+('AP-A320-4', 'Airbus', '2018-03-10', 'Small'),
+('AP-F7X-5',  'Dassault','2022-07-01', 'Small'),
+('AP-F10X-6', 'Dassault','2023-01-01', 'Big');
 
--- --- Flight Attendants (45 attendants) ---
-INSERT INTO Flight_Attendants VALUES
-('FA01', 'Michal', 'A', 'Cohen', 'Tel Aviv', 'Bograshov', '1', '2020-01-01', TRUE),
-('FA02', 'Daniel', 'B', 'Levi', 'Ramat Gan', 'Bialik', '2', '2021-02-01', TRUE),
-('FA03', 'Sarah', 'C', 'Avraham', 'Holon', 'Sokolov', '3', '2019-03-01', FALSE),
-('FA04', 'David', 'D', 'Yosef', 'Bat Yam', 'Balfour', '4', '2022-04-01', FALSE),
-('FA05', 'Rachel', 'E', 'Yaakov', 'Tel Aviv', 'Ben Yehuda', '5', '2018-05-01', TRUE),
-('FA06', 'Moshe', 'F', 'Yitzhak', 'Haifa', 'Hanassi', '6', '2023-01-01', FALSE),
-('FA07', 'Leah', 'G', 'Reuven', 'Jerusalem', 'Gaza', '7', '2020-06-01', TRUE),
-('FA08', 'Yossi', 'H', 'Shimon', 'Ashdod', 'Herzl', '8', '2021-07-01', FALSE),
-('FA09', 'Rivka', 'I', 'Levi', 'Netanya', 'Sderot Nitza', '9', '2019-08-01', TRUE),
-('FA10', 'Chaim', 'J', 'Yehuda', 'Bnei Brak', 'Rabbi Akiva', '10', '2022-09-01', FALSE),
-('FA11', 'Esther', 'K', 'Dan', 'Petah Tikva', 'Baron Hirsch', '11', '2020-10-01', TRUE),
-('FA12', 'Shlomo', 'L', 'Naftali', 'Tel Aviv', 'Ibn Gabirol', '12', '2021-11-01', TRUE),
-('FA13', 'Miriam', 'M', 'Gad', 'Ramat Gan', 'Abba Hillel', '13', '2019-12-01', FALSE),
-('FA14', 'Avraham', 'N', 'Asher', 'Givatayim', 'Weizman', '14', '2022-01-15', FALSE),
-('FA15', 'Yael', 'O', 'Issachar', 'Herzliya', 'Sokolov', '15', '2018-02-20', TRUE),
-('FA16', 'Itzhak', 'P', 'Zevulun', 'Raanana', 'Ahuza', '16', '2023-03-10', FALSE),
-('FA17', 'Tamar', 'Q', 'Binyamin', 'Kfar Saba', 'Weizman', '17', '2020-04-05', TRUE),
-('FA18', 'Yaakov', 'R', 'Menashe', 'Hod Hasharon', 'Magdiel', '18', '2021-05-25', FALSE),
-('FA19', 'Sara', 'S', 'Efraim', 'Rosh Haayin', 'Shabazi', '19', '2019-06-30', TRUE),
-('FA20', 'Aharon', 'T', 'Haim', 'Elad', 'Ben Zvi', '20', '2022-07-12', FALSE),
-('FA21', 'Dana', 'U', 'Zilber', 'Tel Aviv', 'Dizengoff', '21', '2021-01-01', TRUE),
-('FA22', 'Ben', 'V', 'Shahar', 'Haifa', 'Moriah', '22', '2022-02-02', TRUE),
-('FA23', 'Gal', 'W', 'Malka', 'Eilat', 'Hatemarim', '23', '2023-03-03', FALSE),
-('FA24', 'Noam', 'X', 'Bar', 'Jerusalem', 'Jaffa', '24', '2020-04-04', FALSE),
-('FA25', 'Shir', 'Y', 'Tal', 'Rishon', 'Jabotinsky', '25', '2019-05-05', TRUE),
-('FA26', 'Amit', 'Z', 'Mor', 'Ashkelon', 'Agnon', '26', '2021-06-06', FALSE),
-('FA27', 'Efrat', 'A', 'Katz', 'Rehovot', 'Herzl', '27', '2022-07-07', TRUE),
-('FA28', 'Guy', 'B', 'Perez', 'Bat Yam', 'Balfour', '28', '2023-08-08', FALSE),
-('FA29', 'Hila', 'C', 'Segal', 'Holon', 'Sokolov', '29', '2020-09-09', TRUE),
-('FA30', 'Idan', 'D', 'Golan', 'Givatayim', 'Katznelson', '30', '2021-10-10', FALSE),
-('FA31', 'Kobi', 'E', 'Oz', 'Sderot', 'Begin', '31', '2019-11-11', TRUE),
-('FA32', 'Liat', 'F', 'Harari', 'Modiin', 'Emek', '32', '2022-12-12', TRUE),
-('FA33', 'Moti', 'G', 'Lugasi', 'Netivot', 'Shalom', '33', '2023-01-13', FALSE),
-('FA34', 'Nir', 'H', 'Biton', 'Afula', 'Arlosoroff', '34', '2020-02-14', FALSE),
-('FA35', 'Orly', 'I', 'Weinstein', 'Kiryat Ono', 'Levi Eshkol', '35', '2021-03-15', TRUE),
-('FA36', 'Pina', 'J', 'Bausch', 'Tel Aviv', 'Rothschild', '36', '2018-04-16', TRUE),
-('FA37', 'Quentin', 'K', 'Tarantino', 'Ramat Aviv', 'Einstein', '37', '2022-05-17', TRUE),
-('FA38', 'Rina', 'L', 'Matzliach', 'Beer Sheva', 'Rager', '38', '2023-06-18', FALSE),
-('FA39', 'Sigal', 'M', 'Shachmon', 'Herzliya', 'Pituach', '39', '2020-07-19', TRUE),
-('FA40', 'Tomer', 'N', 'Kapon', 'Tel Aviv', 'Florentin', '40', '2021-08-20', FALSE),
-('FA41', 'Uri', 'O', 'Geller', 'Jaffa', 'Kedumim', '41', '2019-09-21', TRUE),
-('FA42', 'Vered', 'P', 'Feldman', 'Givataim', 'Weizman', '42', '2022-10-22', TRUE),
-('FA43', 'Yoni', 'Q', 'Rechter', 'Tel Aviv', 'Bazel', '43', '2023-11-23', FALSE),
-('FA44', 'Ziv', 'R', 'Koren', 'Ramat Gan', 'Abba Hillel', '44', '2020-12-24', FALSE),
-('FA45', 'Adam', 'S', 'Sandler', 'Netanya', 'Poleg', '45', '2021-01-25', TRUE);
+-- --- Classes ---
+INSERT IGNORE INTO Airplane_Classes (class_type, airplane_id, columns_count, rows_count) VALUES
+('Business', 'AP-B787-1', 4, 5), 
+('Economy', 'AP-B787-1', 9, 30),
+('Economy',  'AP-B737-2', 6, 25),
+('Business', 'AP-A380-3', 6, 10), 
+('Economy', 'AP-A380-3', 10, 40),
+('Economy',  'AP-A320-4', 6, 25),
+('Economy',  'AP-F7X-5',  4, 15),
+('Business', 'AP-F10X-6', 4, 5), 
+('Economy', 'AP-F10X-6', 6, 20);
 
-INSERT INTO Attendant_Phones VALUES 
-('050-1234567', 'FA01'), ('050-2345678', 'FA02'), ('050-3456789', 'FA03');
-
--- --- Managers (5 managers) ---
-INSERT INTO Managers VALUES
-('M001', 'pass123', 'Boss', 'The', 'Manager', 'Tel Aviv', 'Azrieli', '1', '2010-01-01'),
-('M002', 'admin456', 'Big', 'Chief', 'Officer', 'Herzliya', 'Pituach', '2', '2012-02-02'),
-('M003', 'secure789', 'Head', 'Of', 'Ops', 'Jerusalem', 'Knesset', '3', '2015-05-05'),
-('M004', 'super321', 'Super', 'Visor', 'Hero', 'Haifa', 'Technion', '4', '2018-08-08'),
-('M005', 'master654', 'Master', 'Of', 'Puppets', 'Eilat', 'Hotel', '5', '2020-10-10');
-
-INSERT INTO Manager_Phones VALUES 
-('050-9999999', 'M001'), ('052-8888888', 'M002');
-
--- --- Routes ---
-INSERT INTO Flight_Routes VALUES
-('TLV', 'JFK', 660), 
-('JFK', 'TLV', 600),
-('TLV', 'LHR', 300),
-('LHR', 'TLV', 290),
-('TLV', 'CDG', 290),
-('CDG', 'TLV', 280),
-('TLV', 'ETM', 50),
-('ETM', 'TLV', 50),
-('TLV', 'BKK', 660),
-('BKK', 'TLV', 690),
-('TLV', 'DXB', 180), 
-('DXB', 'TLV', 190);
-
--- --- Airplanes (6 Planes: 3 Big, 3 Small) ---
-INSERT INTO Airplanes VALUES
-('AP-BIG-1', 'Boeing', '2018-05-01', 'Big'), 
-('AP-BIG-2', 'Boeing', '2020-01-15', 'Big'), 
-('AP-BIG-3', 'Airbus', '2019-11-20', 'Big'), 
-('AP-SML-1', 'Airbus', '2019-08-20', 'Small'),
-('AP-SML-2', 'Airbus', '2021-11-30', 'Small'),
-('AP-SML-3', 'Boeing', '2018-02-14', 'Small');
-
--- --- Airplane Classes ---
--- BIG: Business + Economy. SMALL: Economy Only.
-INSERT INTO Airplane_Classes VALUES
-('Business', 'AP-BIG-1', 4, 4), -- 4 rows, 4 columns
-('Economy', 'AP-BIG-1', 6, 30), -- 30 rows, 6 columns
-('Business', 'AP-BIG-2', 4, 4),
-('Economy', 'AP-BIG-2', 6, 30),
-('Business', 'AP-BIG-3', 4, 4),
-('Economy', 'AP-BIG-3', 6, 30),
-('Economy', 'AP-SML-1', 6, 20), -- 20 rows, 6 columns
-('Economy', 'AP-SML-2', 6, 20),
-('Economy', 'AP-SML-3', 6, 20);
-
--- --- SEATS GENERATION (Using Procedure to loop and create all seats) ---
+-- --- Seats Generation (Procedure) ---
 DELIMITER $$
+
+-- 1. מחיקה בטוחה (רק אם קיים)
+DROP PROCEDURE IF EXISTS GenerateSeats$$
+
+-- 2. יצירה מחדש
 CREATE PROCEDURE GenerateSeats()
 BEGIN
-    DECLARE i INT;
-    DECLARE j INT;
-    
-    -- 1. BIG PLANE 1 (AP-BIG-1)
-    -- Business: 4 Rows, 4 Cols
-    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-1'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-    -- Economy: 30 Rows, 6 Cols (Starting row 5)
-    SET i = 5; WHILE i <= 34 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-BIG-1'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-
-    -- 2. BIG PLANE 2 (AP-BIG-2)
-    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-2'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-    SET i = 5; WHILE i <= 34 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-BIG-2'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-
-    -- 3. BIG PLANE 3 (AP-BIG-3)
-    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-3'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-    SET i = 5; WHILE i <= 34 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-BIG-3'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-
-    -- 4. SMALL PLANE 1 (AP-SML-1) - 20 Rows Economy, 6 Cols
-    SET i = 1; WHILE i <= 20 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-SML-1'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-
-    -- 5. SMALL PLANE 2 (AP-SML-2)
-    SET i = 1; WHILE i <= 20 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-SML-2'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-
-    -- 6. SMALL PLANE 3 (AP-SML-3)
-    SET i = 1; WHILE i <= 20 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-SML-3'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
-
+    DECLARE i INT; DECLARE j INT;
+    -- AP-B787-1
+    SET i=1; WHILE i<=5 DO SET j=1; WHILE j<=4 DO INSERT IGNORE INTO Seats VALUES(i,j,'Business','AP-B787-1'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
+    SET i=1; WHILE i<=30 DO SET j=1; WHILE j<=9 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-B787-1'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
+    -- AP-B737-2
+    SET i=1; WHILE i<=25 DO SET j=1; WHILE j<=6 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-B737-2'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
+    -- AP-A380-3
+    SET i=1; WHILE i<=10 DO SET j=1; WHILE j<=6 DO INSERT IGNORE INTO Seats VALUES(i,j,'Business','AP-A380-3'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
+    SET i=1; WHILE i<=40 DO SET j=1; WHILE j<=10 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-A380-3'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
+    -- AP-A320-4
+    SET i=1; WHILE i<=25 DO SET j=1; WHILE j<=6 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-A320-4'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
+    -- AP-F7X-5
+    SET i=1; WHILE i<=15 DO SET j=1; WHILE j<=4 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-F7X-5'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
+    -- AP-F10X-6
+    SET i=1; WHILE i<=5 DO SET j=1; WHILE j<=4 DO INSERT IGNORE INTO Seats VALUES(i,j,'Business','AP-F10X-6'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
+    SET i=1; WHILE i<=20 DO SET j=1; WHILE j<=6 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-F10X-6'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
 END$$
+
 DELIMITER ;
 
--- Execute the procedure to fill seats
+-- 3. הרצה
 CALL GenerateSeats();
--- Drop procedure after use
-DROP PROCEDURE GenerateSeats;
 
+-- 4. מחיקה בטוחה בסוף (התיקון כאן)
+DROP PROCEDURE IF EXISTS GenerateSeats;
 
--- --- Flights (10 Flights) ---
--- Format: ID, Date, Plane, From, To, Status, Time, Runway
+-- --- Managers (5) ---
+INSERT INTO Managers VALUES
+('M-001', 'pass1', 'Sarah', 'A', 'Connor', 'Tel Aviv', 'Azrieli', '1', '2015-01-01'),
+('M-002', 'pass2', 'Tony', 'B', 'Stark', 'Herzliya', 'Pituach', '2', '2016-06-15'),
+('M-003', 'pass3', 'Bruce', 'C', 'Wayne', 'Jerusalem', 'Main', '3', '2018-01-01'),
+('M-004', 'pass4', 'Clark', 'D', 'Kent', 'Haifa', 'Sea', '4', '2019-01-01'),
+('M-005', 'pass5', 'Diana', 'E', 'Prince', 'Eilat', 'Sun', '5', '2020-01-01');
+
+-- --- Pilots (22) ---
+INSERT INTO Pilots VALUES
+('P-001', 'Maverick', 'M', 'Mitchell', 'Tel Aviv', 'A', '1', '2010-01-01', TRUE),
+('P-002', 'Iceman', 'K', 'Kazansky', 'Haifa', 'B', '2', '2011-01-01', TRUE),
+('P-003', 'Amelia', 'E', 'Earhart', 'Eilat', 'C', '3', '2012-01-01', TRUE),
+('P-004', 'Chuck', 'Y', 'Yeager', 'Jerusalem', 'D', '4', '2013-01-01', TRUE),
+('P-005', 'Sully', 'S', 'Sullenberger', 'Tel Aviv', 'E', '5', '2014-01-01', TRUE),
+('P-006', 'Han', 'S', 'Solo', 'Rishon', 'F', '6', '2020-01-01', FALSE),
+('P-007', 'Wedge', 'A', 'Antilles', 'Holon', 'G', '7', '2021-01-01', FALSE),
+('P-008', 'Starbuck', 'T', 'Thrace', 'Bat Yam', 'H', '8', '2022-01-01', FALSE),
+('P-009', 'Apollo', 'A', 'Adama', 'Rehovot', 'I', '9', '2023-01-01', FALSE),
+('P-010', 'Fox', 'M', 'McCloud', 'Tel Aviv', 'J', '10', '2024-01-01', FALSE),
+('P-011', 'Yotam', 'D', 'Cohen', 'Tel Aviv', 'R', '11', '2015-01-01', TRUE),
+('P-012', 'Noa', 'S', 'Levi', 'Haifa', 'H', '12', '2016-05-15', TRUE),
+('P-013', 'Ido', 'M', 'Mizrahi', 'Eilat', 'T', '13', '2018-02-20', FALSE),
+('P-014', 'Dana', 'R', 'Peretz', 'Jerusalem', 'J', '14', '2019-11-10', FALSE),
+('P-015', 'Guy', 'O', 'Azulai', 'Rishon', 'J', '15', '2010-06-30', TRUE),
+('P-016', 'Roni', 'M', 'Friedman', 'Tel Aviv', 'D', '16', '2021-01-01', FALSE),
+('P-017', 'Eyal', 'H', 'Golan', 'Rehovot', 'H', '17', '2014-08-14', TRUE),
+('P-018', 'Tamar', 'Y', 'Katz', 'Givatayim', 'K', '18', '2017-03-22', TRUE),
+('P-019', 'Omer', 'A', 'Biton', 'Tel Aviv', 'A', '19', '2020-09-09', FALSE),
+('P-020', 'Shira', 'L', 'Shapira', 'Haifa', 'M', '20', '2012-12-12', TRUE),
+('P-021', 'Doron', 'A', 'Sason', 'Holon', 'K', '21', '2016-04-01', TRUE),
+('P-022', 'Maya', 'T', 'Dagan', 'Raanana', 'A', '22', '2019-07-20', FALSE);
+
+-- --- Flight Attendants (45) ---
+INSERT INTO Flight_Attendants VALUES
+('FA-001', 'Rachel', 'G', 'Green', 'Tel Aviv', 'A', '1', '2018-01-01', TRUE),
+('FA-002', 'Monica', 'G', 'Geller', 'Tel Aviv', 'B', '2', '2018-02-01', TRUE),
+('FA-003', 'Phoebe', 'B', 'Buffay', 'Tel Aviv', 'C', '3', '2018-03-01', TRUE),
+('FA-004', 'Joey', 'T', 'Tribbiani', 'Tel Aviv', 'D', '4', '2018-04-01', TRUE),
+('FA-005', 'Chandler', 'M', 'Bing', 'Tel Aviv', 'E', '5', '2018-05-01', TRUE),
+('FA-006', 'Ross', 'G', 'Geller', 'Tel Aviv', 'F', '6', '2018-06-01', TRUE),
+('FA-007', 'Jerry', 'S', 'Seinfeld', 'Haifa', 'G', '7', '2019-01-01', FALSE),
+('FA-008', 'Elaine', 'B', 'Benes', 'Haifa', 'H', '8', '2019-02-01', FALSE),
+('FA-009', 'George', 'C', 'Costanza', 'Haifa', 'I', '9', '2019-03-01', FALSE),
+('FA-010', 'Cosmo', 'K', 'Kramer', 'Haifa', 'J', '10', '2019-04-01', FALSE),
+('FA-011', 'Ted', 'M', 'Mosby', 'Eilat', 'K', '11', '2020-01-01', FALSE),
+('FA-012', 'Robin', 'S', 'Scherbatsky', 'Eilat', 'L', '12', '2020-02-01', FALSE),
+('FA-013', 'Barney', 'S', 'Stinson', 'Eilat', 'M', '13', '2020-03-01', FALSE),
+('FA-014', 'Lily', 'A', 'Aldrin', 'Eilat', 'N', '14', '2020-04-01', FALSE),
+('FA-015', 'Marshall', 'E', 'Eriksen', 'Eilat', 'O', '15', '2020-05-01', FALSE),
+('FA-016', 'Michael', 'S', 'Scott', 'Jerusalem', 'P', '16', '2021-01-01', FALSE),
+('FA-017', 'Dwight', 'S', 'Schrute', 'Jerusalem', 'Q', '17', '2021-02-01', FALSE),
+('FA-018', 'Jim', 'H', 'Halpert', 'Jerusalem', 'R', '18', '2021-03-01', FALSE),
+('FA-019', 'Pam', 'B', 'Beesly', 'Jerusalem', 'S', '19', '2021-04-01', FALSE),
+('FA-020', 'Ryan', 'H', 'Howard', 'Jerusalem', 'T', '20', '2021-05-01', FALSE),
+('FA-021', 'Michal', 'A', 'Cohen', 'Tel Aviv', 'U', '21', '2020-01-01', TRUE),
+('FA-022', 'Daniel', 'B', 'Levi', 'Ramat Gan', 'V', '22', '2021-02-01', TRUE),
+('FA-023', 'Sarah', 'C', 'Avraham', 'Holon', 'W', '23', '2019-03-01', FALSE),
+('FA-024', 'David', 'D', 'Yosef', 'Bat Yam', 'X', '24', '2022-04-01', FALSE),
+('FA-025', 'Rachel', 'E', 'Yaakov', 'Tel Aviv', 'Y', '25', '2018-05-01', TRUE),
+('FA-026', 'Moshe', 'F', 'Yitzhak', 'Haifa', 'Z', '26', '2023-01-01', FALSE),
+('FA-027', 'Leah', 'G', 'Reuven', 'Jerusalem', 'AA', '27', '2020-06-01', TRUE),
+('FA-028', 'Yossi', 'H', 'Shimon', 'Ashdod', 'BB', '28', '2021-07-01', FALSE),
+('FA-029', 'Rivka', 'I', 'Levi', 'Netanya', 'CC', '29', '2019-08-01', TRUE),
+('FA-030', 'Chaim', 'J', 'Yehuda', 'Bnei Brak', 'DD', '30', '2022-09-01', FALSE),
+('FA-031', 'Esther', 'K', 'Dan', 'Petah Tikva', 'EE', '31', '2020-10-01', TRUE),
+('FA-032', 'Shlomo', 'L', 'Naftali', 'Tel Aviv', 'FF', '32', '2021-11-01', TRUE),
+('FA-033', 'Miriam', 'M', 'Gad', 'Ramat Gan', 'GG', '33', '2019-12-01', FALSE),
+('FA-034', 'Avraham', 'N', 'Asher', 'Givatayim', 'HH', '34', '2022-01-15', FALSE),
+('FA-035', 'Yael', 'O', 'Issachar', 'Herzliya', 'II', '35', '2018-02-20', TRUE),
+('FA-036', 'Itzhak', 'P', 'Zevulun', 'Raanana', 'JJ', '36', '2023-03-10', FALSE),
+('FA-037', 'Tamar', 'Q', 'Binyamin', 'Kfar Saba', 'KK', '37', '2020-04-05', TRUE),
+('FA-038', 'Yaakov', 'R', 'Menashe', 'Hod Hasharon', 'LL', '38', '2021-05-25', FALSE),
+('FA-039', 'Sara', 'S', 'Efraim', 'Rosh Haayin', 'MM', '39', '2019-06-30', TRUE),
+('FA-040', 'Aharon', 'T', 'Haim', 'Elad', 'NN', '40', '2022-07-12', FALSE),
+('FA-041', 'Dana', 'U', 'Zilber', 'Tel Aviv', 'OO', '41', '2021-01-01', TRUE),
+('FA-042', 'Ben', 'V', 'Shahar', 'Haifa', 'PP', '42', '2022-02-02', TRUE),
+('FA-043', 'Gal', 'W', 'Malka', 'Eilat', 'QQ', '43', '2023-03-03', FALSE),
+('FA-044', 'Noam', 'X', 'Bar', 'Jerusalem', 'RR', '44', '2020-04-04', FALSE),
+('FA-045', 'Shir', 'Y', 'Tal', 'Rishon', 'SS', '45', '2019-05-05', TRUE);
+
+-- --- Flights (12 Flights) ---
 INSERT INTO Flights VALUES
-('FL001', '2026-06-01', 'AP-BIG-1', 'TLV', 'JFK', 'Active', '08:00:00', 'R1'),
-('FL002', '2026-06-02', 'AP-BIG-1', 'JFK', 'TLV', 'Active', '20:00:00', 'R4L'),
-('FL003', '2026-06-01', 'AP-SML-1', 'TLV', 'ETM', 'Arrived', '07:00:00', 'R2'),
-('FL004', '2026-06-01', 'AP-SML-2', 'TLV', 'LHR', 'Active', '10:00:00', 'R1'),
-('FL005', '2026-06-05', 'AP-BIG-2', 'TLV', 'CDG', 'Cancelled', '14:00:00', 'R3'),
-('FL006', '2026-06-10', 'AP-BIG-3', 'TLV', 'BKK', 'Active', '23:00:00', 'R1'),
-('FL007', '2026-06-11', 'AP-BIG-3', 'BKK', 'TLV', 'Active', '15:00:00', 'R2'),
-('FL008', '2026-06-01', 'AP-SML-3', 'TLV', 'DXB', 'Full Capacity', '09:00:00', 'R3'),
-('FL009', '2026-06-01', 'AP-SML-1', 'ETM', 'TLV', 'Arrived', '09:00:00', 'R1'),
-('FL010', '2026-06-15', 'AP-BIG-1', 'TLV', 'JFK', 'Active', '00:30:00', 'R1');
+('FL-101', '2026-05-01', 'AP-B787-1', 'TLV', 'JFK', 'Active', '23:00:00', 'R1'),
+('FL-102', '2026-05-02', 'AP-B737-2', 'TLV', 'LHR', 'Active', '16:00:00', 'R3'),
+('FL-103', '2026-05-03', 'AP-A380-3', 'TLV', 'CDG', 'Active', '08:00:00', 'R2'),
+('FL-104', '2026-05-04', 'AP-A320-4', 'TLV', 'ETM', 'Active', '10:00:00', 'R1'),
+('FL-105', '2026-05-10', 'AP-F10X-6', 'TLV', 'JFK', 'Arrived', '22:00:00', 'R2'),
+('FL-106', '2026-05-11', 'AP-F7X-5', 'TLV', 'ETM', 'Cancelled', '12:00:00', 'R3'),
+('FL-107', '2026-06-01', 'AP-A380-3', 'TLV', 'CDG', 'Full Capacity', '09:00:00', 'R4'),
+('FL-108', '2026-06-05', 'AP-B737-2', 'TLV', 'LHR', 'Arrived', '15:00:00', 'R5'),
+('FL-109', '2026-06-10', 'AP-B787-1', 'TLV', 'JFK', 'Active', '23:30:00', 'R1'),
+('FL-110', '2026-06-12', 'AP-A320-4', 'TLV', 'ETM', 'Arrived', '11:00:00', 'R2'),
+('FL-111', '2026-06-15', 'AP-B787-1', 'TLV', 'BKK', 'Active', '14:00:00', 'R1'),
+('FL-112', '2026-06-20', 'AP-B737-2', 'TLV', 'DXB', 'Active', '10:00:00', 'R2');
 
+-- --- Crew Assignments ---
+INSERT INTO Pilots_In_Flights (pilot_id, flight_id, departure_date) VALUES 
+('P-001','FL-101','2026-05-01'), ('P-002','FL-101','2026-05-01'), ('P-003','FL-101','2026-05-01'),
+('P-006','FL-102','2026-05-02'), ('P-007','FL-102','2026-05-02'),
+('P-004','FL-103','2026-05-03'), ('P-005','FL-103','2026-05-03'), ('P-008','FL-103','2026-05-03'),
+('P-009','FL-104','2026-05-04'), ('P-010','FL-104','2026-05-04'),
+('P-001','FL-105','2026-05-10'), ('P-002','FL-105','2026-05-10'),
+('P-006','FL-106','2026-05-11'), ('P-007','FL-106','2026-05-11'),
+('P-004','FL-107','2026-06-01'), ('P-005','FL-107','2026-06-01'),
+('P-006','FL-108','2026-06-05'), ('P-007','FL-108','2026-06-05'),
+('P-001','FL-109','2026-06-10'), ('P-011','FL-109','2026-06-10'),
+('P-009','FL-110','2026-06-12'), ('P-013','FL-110','2026-06-12'),
+('P-015','FL-111','2026-06-15'), ('P-017','FL-111','2026-06-15'),
+('P-021','FL-112','2026-06-20');
 
--- --- Classes In Flights (Pricing) ---
+INSERT INTO Attendants_In_Flights (attendant_id, flight_id, departure_date) VALUES 
+('FA-001','FL-101','2026-05-01'), ('FA-002','FL-101','2026-05-01'), ('FA-003','FL-101','2026-05-01'), ('FA-004','FL-101','2026-05-01'),
+('FA-007','FL-102','2026-05-02'), ('FA-008','FL-102','2026-05-02'),
+('FA-010','FL-103','2026-05-03'), ('FA-011','FL-103','2026-05-03'), ('FA-012','FL-103','2026-05-03'),
+('FA-016','FL-104','2026-05-04'), ('FA-017','FL-104','2026-05-04'),
+('FA-001','FL-105','2026-05-10'), ('FA-002','FL-105','2026-05-10'),
+('FA-007','FL-106','2026-05-11'), ('FA-008','FL-106','2026-05-11'),
+('FA-010','FL-107','2026-06-01'), ('FA-011','FL-107','2026-06-01'),
+('FA-007','FL-108','2026-06-05'), ('FA-008','FL-108','2026-06-05'),
+('FA-001','FL-109','2026-06-10'), ('FA-021','FL-109','2026-06-10'),
+('FA-016','FL-110','2026-06-12'), ('FA-023','FL-110','2026-06-12'),
+('FA-025','FL-111','2026-06-15'), ('FA-027','FL-111','2026-06-15'),
+('FA-031','FL-112','2026-06-20');
+
+-- --- Flight Prices (Classes_In_Flights) ---
 INSERT INTO Classes_In_Flights VALUES
--- FL001 (Big)
-('FL001', '2026-06-01', 'Business', 'AP-BIG-1', 1500.00),
-('FL001', '2026-06-01', 'Economy', 'AP-BIG-1', 800.00),
--- FL003 (Small)
-('FL003', '2026-06-01', 'Economy', 'AP-SML-1', 100.00),
--- FL004 (Small)
-('FL004', '2026-06-01', 'Economy', 'AP-SML-2', 400.00),
--- FL005 (Big - Cancelled)
-('FL005', '2026-06-05', 'Business', 'AP-BIG-2', 1200.00),
-('FL005', '2026-06-05', 'Economy', 'AP-BIG-2', 600.00),
--- FL006 (Big)
-('FL006', '2026-06-10', 'Business', 'AP-BIG-3', 1800.00),
-('FL006', '2026-06-10', 'Economy', 'AP-BIG-3', 900.00),
--- FL008 (Small)
-('FL008', '2026-06-01', 'Economy', 'AP-SML-3', 250.00),
--- FL010 (Big)
-('FL010', '2026-06-15', 'Business', 'AP-BIG-1', 1600.00),
-('FL010', '2026-06-15', 'Economy', 'AP-BIG-1', 850.00);
+('FL-101', '2026-05-01', 'Business', 'AP-B787-1', 1500), ('FL-101', '2026-05-01', 'Economy', 'AP-B787-1', 800),
+('FL-102', '2026-05-02', 'Economy', 'AP-B737-2', 400),
+('FL-103', '2026-05-03', 'Business', 'AP-A380-3', 1800), ('FL-103', '2026-05-03', 'Economy', 'AP-A380-3', 900),
+('FL-104', '2026-05-04', 'Economy', 'AP-A320-4', 150),
+('FL-105', '2026-05-10', 'Business', 'AP-F10X-6', 2000), ('FL-105', '2026-05-10', 'Economy', 'AP-F10X-6', 850),
+('FL-106', '2026-05-11', 'Economy', 'AP-F7X-5', 200),
+('FL-107', '2026-06-01', 'Business', 'AP-A380-3', 1900), ('FL-107', '2026-06-01', 'Economy', 'AP-A380-3', 950),
+('FL-108', '2026-06-05', 'Economy', 'AP-B737-2', 380),
+('FL-109', '2026-06-10', 'Business', 'AP-B787-1', 1600), ('FL-109', '2026-06-10', 'Economy', 'AP-B787-1', 700),
+('FL-110', '2026-06-12', 'Economy', 'AP-A320-4', 160),
+('FL-111', '2026-06-15', 'Business', 'AP-B787-1', 1550), ('FL-111', '2026-06-15', 'Economy', 'AP-B787-1', 750),
+('FL-112', '2026-06-20', 'Economy', 'AP-B737-2', 450);
 
+-- --- Orders (15 Orders) ---
+INSERT IGNORE INTO Orders VALUES
+('ORD-001','reg1@test.com','Active','2026-04-01','Registered'), ('ORD-002','reg2@test.com','Active','2026-04-02','Registered'),
+('ORD-003','guest1@test.com','Active','2026-04-10','Unregistered'), ('ORD-004','guest2@test.com','Active','2026-04-15','Unregistered'),
+('ORD-005','reg1@test.com','Executed','2026-04-20','Registered'), ('ORD-006','reg2@test.com','Cancelled by customer','2026-04-22','Registered'),
+('ORD-007','guest1@test.com','Cancelled by system','2026-04-25','Unregistered'), ('ORD-008','guest2@test.com','Executed','2026-04-28','Unregistered'),
+('ORD-009','reg1@test.com','Active','2026-05-01','Registered'), ('ORD-010','guest1@test.com','Executed','2026-05-02','Unregistered'),
+('ORD-011','guest2@test.com','Active','2026-05-15','Unregistered'), ('ORD-012','reg2@test.com','Active','2026-05-16','Registered'),
+('ORD-013','guest1@test.com','Active','2026-05-17','Unregistered'), ('ORD-014','reg1@test.com','Active','2026-05-18','Registered'),
+('ORD-015','reg2@test.com','Active','2026-05-19','Registered');
 
--- --- Crew Assignments (Big=3P+6FA, Small=2P+3FA) ---
-
--- FL001 (Big)
-INSERT INTO Pilots_In_Flights VALUES ('P001', 'FL001', '2026-06-01'), ('P002', 'FL001', '2026-06-01'), ('P003', 'FL001', '2026-06-01');
-INSERT INTO Attendants_In_Flights VALUES ('FA01', '2026-06-01', 'FL001'), ('FA02', '2026-06-01', 'FL001'), ('FA03', '2026-06-01', 'FL001'), ('FA04', '2026-06-01', 'FL001'), ('FA05', '2026-06-01', 'FL001'), ('FA06', '2026-06-01', 'FL001');
-
--- FL003 (Small)
-INSERT INTO Pilots_In_Flights VALUES ('P004', 'FL003', '2026-06-01'), ('P005', 'FL003', '2026-06-01');
-INSERT INTO Attendants_In_Flights VALUES ('FA07', '2026-06-01', 'FL003'), ('FA08', '2026-06-01', 'FL003'), ('FA09', '2026-06-01', 'FL003');
-
--- FL004 (Small)
-INSERT INTO Pilots_In_Flights VALUES ('P006', 'FL004', '2026-06-01'), ('P007', 'FL004', '2026-06-01');
-INSERT INTO Attendants_In_Flights VALUES ('FA10', '2026-06-01', 'FL004'), ('FA11', '2026-06-01', 'FL004'), ('FA12', '2026-06-01', 'FL004');
-
--- FL005 (Big - Cancelled)
-INSERT INTO Pilots_In_Flights VALUES ('P008', 'FL005', '2026-06-05'), ('P009', 'FL005', '2026-06-05'), ('P010', 'FL005', '2026-06-05');
-INSERT INTO Attendants_In_Flights VALUES ('FA13', '2026-06-05', 'FL005'), ('FA14', '2026-06-05', 'FL005'), ('FA15', '2026-06-05', 'FL005'), ('FA16', '2026-06-05', 'FL005'), ('FA17', '2026-06-05', 'FL005'), ('FA18', '2026-06-05', 'FL005');
-
--- FL006 (Big)
-INSERT INTO Pilots_In_Flights VALUES ('P011', 'FL006', '2026-06-10'), ('P012', 'FL006', '2026-06-10'), ('P013', 'FL006', '2026-06-10');
-INSERT INTO Attendants_In_Flights VALUES ('FA19', '2026-06-10', 'FL006'), ('FA20', '2026-06-10', 'FL006'), ('FA21', '2026-06-10', 'FL006'), ('FA22', '2026-06-10', 'FL006'), ('FA23', '2026-06-10', 'FL006'), ('FA24', '2026-06-10', 'FL006');
-
--- --- Customers ---
-INSERT INTO Registered_Customers VALUES
-('dana@mail.com', 'Dana', 'D', 'Cohen', '987654321', '2024-01-01', '1990-05-05', 'dana123', 'Registered'),
-('avi@mail.com', 'Avi', 'A', 'Levi', '123456789', '2024-02-01', '1985-08-08', 'avi456', 'Registered'),
-('ron@mail.com', 'Ron', 'R', 'Shahar', '112233445', '2024-03-01', '1995-12-12', 'ron789', 'Registered'),
-('shir@mail.com', 'Shir', 'S', 'Pele', '556677889', '2024-04-01', '1998-01-01', 'shir111', 'Registered'),
-('noa@mail.com', 'Noa', 'N', 'Kirel', '102030405', '2024-05-15', '2001-04-10', 'unicorn', 'Registered');
-
-INSERT INTO Unregistered_Customers VALUES
-('guest1@mail.com', 'Guest', 'G', 'One', 'Unregistered'),
-('guest2@mail.com', 'Tourist', 'T', 'Two', 'Unregistered'),
-('guest3@mail.com', 'Visitor', 'V', 'Three', 'Unregistered'),
-('guest4@mail.com', 'Traveler', 'T', 'Four', 'Unregistered');
-
-INSERT INTO Customer_Phones VALUES
-('050-0000001', 'dana@mail.com', 'Registered'),
-('050-0000002', 'avi@mail.com', 'Registered'),
-('054-9999999', 'guest1@mail.com', 'Unregistered');
-
--- --- Orders & Tickets ---
-INSERT INTO Orders VALUES
-('ORD-1001', 'dana@mail.com', 'Active', '2026-05-01', 'Registered'),
-('ORD-1002', 'avi@mail.com', 'Active', '2026-05-02', 'Registered'),
-('ORD-1003', 'guest1@mail.com', 'Executed', '2026-04-01', 'Unregistered'),
-('ORD-1004', 'shir@mail.com', 'Active', '2026-05-10', 'Registered'),
-('ORD-1005', 'guest2@mail.com', 'Active', '2026-05-20', 'Unregistered'),
-('ORD-1006', 'dana@mail.com', 'Cancelled by system', '2026-04-30', 'Registered'), 
-('ORD-1007', 'noa@mail.com', 'Active', '2026-05-25', 'Registered');
-
--- Ticket Details:
--- ORD-1001 (Dana): FL001 (Big), Business Class
--- UPDATED: Includes '2026-06-01' matching FL001
-INSERT INTO Flight_Tickets VALUES
-('ORD-1001', 'FL001', '2026-06-01', 1, 2, 'Business', 'AP-BIG-1'),
-('ORD-1001', 'FL001', '2026-06-01', 1, 3, 'Business', 'AP-BIG-1');
-
--- ORD-1002 (Avi): FL001 (Big), Economy
-INSERT INTO Flight_Tickets VALUES
-('ORD-1002', 'FL001', '2026-06-01', 5, 1, 'Economy', 'AP-BIG-1');
-
--- ORD-1003 (Guest1): FL003 (Small), Economy
-INSERT INTO Flight_Tickets VALUES
-('ORD-1003', 'FL003', '2026-06-01', 6, 1, 'Economy', 'AP-SML-1');
-
--- ORD-1004 (Shir): FL004 (Small), Economy
-INSERT INTO Flight_Tickets VALUES
-('ORD-1004', 'FL004', '2026-06-01', 2, 2, 'Economy', 'AP-SML-2');
-
--- ORD-1006 (Dana - Cancelled): FL005 (Big)
-INSERT INTO Flight_Tickets VALUES
-('ORD-1006', 'FL005', '2026-06-05', 1, 1, 'Business', 'AP-BIG-2');
-
--- ORD-1007 (Noa): FL006 (Big), Business
-INSERT INTO Flight_Tickets VALUES
-('ORD-1007', 'FL006', '2026-06-10', 2, 3, 'Business', 'AP-BIG-3');
+-- --- Tickets (Many Tickets) ---
+INSERT INTO Flight_Tickets (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id) VALUES
+('ORD-001', 'FL-101', '2026-05-01', 1, 1, 'Business', 'AP-B787-1'),
+('ORD-002', 'FL-101', '2026-05-01', 1, 2, 'Business', 'AP-B787-1'),
+('ORD-003', 'FL-102', '2026-05-02', 1, 1, 'Economy', 'AP-B737-2'),
+('ORD-004', 'FL-104', '2026-05-04', 1, 1, 'Economy', 'AP-A320-4'),
+('ORD-005', 'FL-102', '2026-05-02', 2, 1, 'Economy', 'AP-B737-2'),
+('ORD-006', 'FL-103', '2026-05-03', 1, 1, 'Business', 'AP-A380-3'),
+('ORD-007', 'FL-104', '2026-05-04', 2, 1, 'Economy', 'AP-A320-4'),
+('ORD-008', 'FL-105', '2026-05-10', 1, 1, 'Business', 'AP-F10X-6'),
+('ORD-009', 'FL-105', '2026-05-10', 1, 2, 'Business', 'AP-F10X-6'),
+('ORD-010', 'FL-108', '2026-06-05', 1, 1, 'Economy', 'AP-B737-2'),
+('ORD-011', 'FL-109', '2026-06-10', 1, 1, 'Business', 'AP-B787-1'),
+('ORD-012', 'FL-109', '2026-06-10', 1, 2, 'Business', 'AP-B787-1'),
+('ORD-013', 'FL-110', '2026-06-12', 1, 1, 'Economy', 'AP-A320-4'),
+('ORD-014', 'FL-111', '2026-06-15', 1, 1, 'Business', 'AP-B787-1'),
+('ORD-015', 'FL-112', '2026-06-20', 1, 1, 'Economy', 'AP-B737-2');
