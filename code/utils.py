@@ -31,64 +31,6 @@ def db_cur():
         if mydb:
             mydb.close()
 
-'''
-def seed_seats():
-    with db_cur() as cursor:
-        cursor.execute("SELECT airplane_id, size FROM Airplanes")
-        airplanes = cursor.fetchall()
-
-        for plane in airplanes:
-            current_row_start = 1
-
-            if plane['size'] == 'Big':
-                classes = [('Business', 4, 6), ('Economy', 25, 6)]
-            else:
-                classes = [('Economy', 20, 6)]
-
-            for class_type, rows_count, cols_count in classes:
-                cursor.execute("""
-                    INSERT IGNORE INTO Airplane_Classes (class_type, airplane_id, rows_count, columns_count)
-                    VALUES (%s, %s, %s, %s)
-                """, (class_type, plane['airplane_id'], rows_count, cols_count))
-                for r in range(current_row_start, current_row_start + rows_count):
-                    for c in range(1, cols_count + 1):
-                        cursor.execute("""
-                            INSERT IGNORE INTO Seats (row_num, column_num, class_type, airplane_id)
-                            VALUES (%s, %s, %s, %s)
-                        """, (r, c, class_type, plane['airplane_id']))
-                current_row_start += rows_count
-
-
-def seed_full_database():
-    with db_cur() as cursor:
-        airplanes = [
-            ('AP-BIG-1', 'Boeing', '2018-05-01', 'Big'),
-            ('AP-SML-1', 'Airbus', '2019-08-20', 'Small')
-        ]
-        cursor.executemany("INSERT IGNORE INTO Airplanes VALUES (%s, %s, %s, %s)", airplanes)
-
-        # 2. יצירת מנהלים - סדר העמודות: id, password, first, middle, last, city, street, house, date
-        managers = [
-            ('M001', 'pass123', 'Boss', 'The', 'Manager', 'Tel Aviv', 'Azrieli', '1', '2010-01-01'),
-            ('M002', 'admin456', 'Big', 'Chief', 'Officer', 'Herzliya', 'Pituach', '2', '2012-02-02')
-        ]
-        # שים לב שיש כאן 9 סימני %s שמתאימים ל-9 ערכים ול-9 עמודות בטבלה המעודכנת
-        cursor.executemany("INSERT IGNORE INTO Managers VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", managers)
-
-        # 3. יצירת טיסות (לפחות 4 כפי שנדרש בעמ' 5)
-        flights = [
-            ('FL101', '2026-06-01', 'AP-BIG-1', 'TLV', 'JFK', 'Active', '08:00:00', 'R1'),
-            ('FL102', '2026-06-02', 'AP-BIG-1', 'JFK', 'TLV', 'Active', '20:00:00', 'R4L'),
-            ('FL103', '2026-06-01', 'AP-SML-1', 'TLV', 'ETM', 'Active', '07:00:00', 'R2'),
-            ('FL104', '2026-06-15', 'AP-BIG-1', 'TLV', 'LHR', 'Active', '10:00:00', 'R1')
-        ]
-        cursor.executemany("INSERT IGNORE INTO Flights VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", flights)
-
-        # הרצת יצירת המושבים עבור המטוסים החדשים
-        seed_seats()
-        cursor.commit()
-'''
-
 
 def register_new_customer(data):
     """
