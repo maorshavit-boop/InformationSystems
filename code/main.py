@@ -336,6 +336,5 @@ def finalize_booking():
 
 if __name__ == '__main__':
     #Running in debug mode for easier development
-    seed_full_database()
     app.run(debug=True)
 
