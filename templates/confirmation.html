@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmed - FLYTAU</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .confirm-card {
+            max-width: 500px; margin: 100px auto; text-align: center;
+            padding: 40px; border: 2px solid #28a745; border-radius: 15px;
+        }
+        .order-num { font-size: 2em; color: #28a745; font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="confirm-card">
+        <img src="{{ url_for('static', filename='logo.png') }}" width="150">
+        <h1>Booking Confirmed!</h1>
+        <p>Thank you for choosing FLYTAU. Your order has been successfully processed.</p>
+        <div class="order-num">{{ order_code }}</div>
+        <p>You can view your details in <strong>My Trips</strong> or use the code above.</p>
+        <hr>
+        <a href="/"><button class="confirm-btn" style="background-color: #0056b3;">Return Home</button></a>
+        <a href="/mytrips"><button class="confirm-btn">View My Trips</button></a>
+    </div>
+</body>
+</html>

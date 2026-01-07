@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FLYTAU Booking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" width="150">
+        <nav><a href="/">Back to Flights</a></nav>
+    </header>
+
+    <main>
+        <div class="plane-container">
+            <h2 style="text-align: center;">Select Your Seats - Flight {{ flight_id }}</h2>
+
+            <div class="legend-container">
+                <div class="legend-item"><div class="legend-box business"></div><span>Business</span></div>
+                <div class="legend-item"><div class="legend-box economy"></div><span>Economy</span></div>
+                <div class="legend-item"><div class="legend-box" style="background:#ffeb3b; border:1px solid #ddd;"></div><span>Selected</span></div>
+                <div class="legend-item"><div class="legend-box taken"></div><span>Taken</span></div>
+            </div>
+
+            <form action="/order_summary" method="POST">
+                <input type="hidden" name="flight_id" value="{{ flight_id }}">
+
+                <div class="seat-grid">
+                    {% for seat in all_seats %}
+
+                        {# הזרקת מספר השורה בעמודה הרביעית (בדיוק במעבר המטוס) #}
+                        {% if loop.index0 % 6 == 3 or (seat.column_num|map_to_letter == 'D') %}
+                            {# אם האות היא D או האינדקס הוא 3, נשים את מספר השורה באמצע #}
+                        {% endif %}
+
+                        {# פתרון בטוח יותר: נבדוק אם הגענו למושב הרביעי בכל שורה (D) #}
+                        {% if seat.column_num|map_to_letter == 'D' %}
+                            <div class="row-label">{{ seat.row_num }}</div>
+                        {% endif %}
+
+                        <div class="seat-wrapper">
+                            <input type="checkbox" id="seat-{{ loop.index }}"
+                                   name="selected_seats"
+                                   value="{{ seat.row_num }}-{{ seat.column_num }}-{{ seat.class_type }}-{{ flight_info.airplane_id }}"
+                                   {% if seat.is_taken %} disabled {% endif %}>
+
+                            <label for="seat-{{ loop.index }}"
+                                   class="seat {{ seat.class_type|lower }} {{ 'taken' if seat.is_taken }}">
+                                {{ seat.column_num|map_to_letter }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% if not current_user.is_authenticated %}
+                <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
+                    <h4>Guest Details</h4>
+                    <input type="text" name="guest_first" placeholder="First Name" required>
+                    <input type="text" name="guest_last" placeholder="Last Name" required>
+                    <input type="email" name="guest_email" placeholder="Email" required>
+                </div>
+                {% endif %}
+
+                <div style="text-align: center;">
+                    <button type="submit" class="confirm-btn">Confirm Selection</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

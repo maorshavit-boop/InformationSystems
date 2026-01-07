@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLYTAU - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Specific styles for the Manager Dashboard visibility */
+        .manager-panel { background: #f4f7f6; border: 2px solid #0056b3; padding: 20px; border-radius: 12px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 10px; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+        .status-active { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" class="logo" width="120">
+
+        <nav>
+            <a href="/">Home</a>
+            {% if current_user.is_authenticated and current_user.user_type == 'Registered' %}
+                <a href="/mytrips">My Trips</a>
+            {% endif %}
+
+            {% if current_user.is_authenticated %}
+                <span style="margin-left: 20px;">Welcome, <strong>{{ current_user.first_name }}</strong> ({{ current_user.user_type }})</span>
+                <a href="/logout" style="margin-left: 10px; color: #dc3545;">Logout</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <p class="flash-message {{ category }}">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if not current_user.is_authenticated %}
+    <section class="login-section">
+        <h3>Login to FLYTAU</h3>
+        <form action="/login" method="POST">
+            <input type="text" name="id_or_email" placeholder="Email or Manager ID" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p>New customer? <a href="/signup">Sign up here</a></p>
+    </section>
+    {% endif %}
+
+    {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
+    <section class="manager-panel">
+        <h2 style="color: #0056b3;">Manager Dashboard</h2>
+        <p>Manage system flights and pricing below.</p>
+        <hr>
+
+        <button onclick="document.getElementById('add-flight-div').style.toggleDisplay()"
+                style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">
+            + Create New Flight
+        </button>
+
+        <div id="add-flight-div" style="margin-top: 20px; border: 1px dashed #ccc; padding: 15px;">
+            [cite_start]<h4>Add New Flight Record </h4>
+            <form action="/add_flight" method="POST" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <input type="text" name="flight_id" placeholder="Flight ID (e.g., FL105)" required>
+                <input type="date" name="departure_date" required>
+                <input type="time" name="departure_time" required>
+                <input type="text" name="source_airport" placeholder="Source (e.g., TLV)" required>
+                <input type="text" name="destination_airport" placeholder="Destination (e.g., JFK)" required>
+                <input type="text" name="airplane_id" placeholder="Airplane ID" required>
+                <input type="text" name="runway_num" placeholder="Runway Number" required>
+                <button type="submit" style="grid-column: span 3; background: #0056b3; color: white;">Save Flight</button>
+            </form>
+        </div>
+    </section>
+    {% endif %}
+
+    <hr>
+
+    <section class="search-section">
+        <h3>Search Flights</h3>
+        <form method="GET" action="/">
+            <input type="text" name="source" placeholder="From (e.g. TLV)" value="{{ request.args.get('source', '') }}">
+            <input type="text" name="dest" placeholder="To (e.g. JFK)" value="{{ request.args.get('dest', '') }}">
+            <input type="date" name="date" value="{{ request.args.get('date', '') }}">
+            <button type="submit">Search</button>
+        </form>
+    </section>
+
+    <section class="flights-display">
+        <h3>Available Flights</h3>
+        <table border="1" style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th>Flight ID</th>
+                    <th>Route</th>
+                    <th>Departure Date & Time</th>
+                    {% if current_user.user_type == 'Manager' %}
+                        <th>Status</th> {% endif %}
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in flights %}
+                <tr>
+                    <td><strong>{{ flight.flight_id }}</strong></td>
+                    <td>{{ flight.source_airport }} ➝ {{ flight.destination_airport }}</td>
+                    <td>{{ flight.departure_date }} at {{ flight.departure_time }}</td>
+
+                    {% if current_user.user_type == 'Manager' %}
+                    <td>
+                        <span class="status-badge {{ 'status-active' if flight.status == 'Active' else 'status-cancelled' }}">
+                            {{ flight.status }}
+                        </span>
+                    </td>
+                    {% endif %}
+
+                    <td>
+                        {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
+                            {% if flight.status == 'Active' %}
+                            <form action="{{ url_for('cancel_flight', flight_id=flight.flight_id) }}" method="POST" onsubmit="return confirm('Cancel this flight and refund all passengers?');">
+                                <button type="submit" style="background: #dc3545; color: white; padding: 5px 10px; border: none; cursor: pointer;">Cancel Flight</button>
+                            </form>
+                            {% else %}
+                                <span style="color: #999;">Locked</span>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('book_flight', flight_id=flight.flight_id) }}">
+                                <button type="button" style="background: #007bff; color: white; padding: 5px 15px; border: none; cursor: pointer;">Book Now</button>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 20px;">No flights found matching your criteria.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+</main>
+
+<footer>
+    [cite_start]<p>© 2026 FLYTAU Airlines. All rights reserved. [cite: 107]</p>
+</footer>
+
+<script>
+    // Simple helper to toggle management forms
+    HTMLElement.prototype.toggleDisplay = function() {
+        if (this.style.display === 'none' || this.style.display === '') {
+            this.style.display = 'block';
+        } else {
+            this.style.display = 'none';
+        }
+    };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,105 @@
+/* מכולת המטוס */
+.plane-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 80px 80px 20px 20px;
+    border: 2px solid #ddd;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* המקרא (Legend) */
+.legend-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: bold; }
+.legend-box { width: 18px; height: 18px; border-radius: 3px; }
+
+/* הגריד: 3 מושבים | מספר שורה | 3 מושבים */
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 45px) 40px repeat(3, 45px); /* גודל קבוע לכל עמודה */
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* עיצוב המושב */
+.seat {
+    display: block;
+    width: 45px;
+    height: 45px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 45px;
+    font-weight: bold;
+    color: white;
+    transition: 0.2s;
+}
+
+/* הסתרת ה-checkbox */
+.seat-wrapper input[type="checkbox"] {
+    display: none !important;
+}
+
+/* צבעי מחלקות וסטטוסים */
+.business { background-color: #1a237e !important; }
+.economy { background-color: #2196f3 !important; }
+.taken { background-color: #ccc !important; cursor: not-allowed; }
+
+/* סימון מושב שנבחר */
+.seat-wrapper input[type="checkbox"]:checked + .seat {
+    background-color: #ffeb3b !important;
+    color: #000 !important;
+    border: 2px solid #fbc02d;
+    transform: scale(1.1);
+}
+
+.row-label {
+    text-align: center;
+    font-weight: bold;
+    color: #888;
+    font-size: 1.1em;
+}
+
+.confirm-btn {
+    margin-top: 30px;
+    padding: 12px 30px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* עיצוב כללי להודעות קופצות */
+.flash-container {
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+/* הודעת שגיאה באדום - עבור incorrect login details */
+.flash-message.danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    font-weight: bold;
+}
+
+/* הודעת הצלחה בירוק (אם תרצה בעתיד) */
+.flash-message.success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
