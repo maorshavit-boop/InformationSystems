@@ -86,6 +86,7 @@ def seed_full_database():
 
         # הרצת יצירת המושבים עבור המטוסים החדשים
         seed_seats()
+        cursor.commit()
 
 
 def register_new_customer(data):
@@ -110,6 +111,7 @@ def register_new_customer(data):
             ))
             insert_phone = "INSERT INTO Customer_Phones (phone_num, email, customer_type) VALUES (%s, %s, 'Registered')"
             cursor.execute(insert_phone, (data['phone'], data['email']))
+            cursor.commit()
             return True, "Account created successfully!"
         except Exception as e:
             print(f"Signup error: {e}")
@@ -349,7 +351,7 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
                     INSERT INTO Flight_Tickets (order_code, flight_id, row_num, column_num, class_type, airplane_id, price)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (order_code, flight_id, row, col, s_class, airplane_id, price))
-
+            cursor.commit()
             return True, "Booking successful!", order_code
         except Exception as e:
             print(f"Booking Error: {e}")
@@ -407,7 +409,7 @@ class FlightAttendant(Worker):
 
 
 class Manager(Worker, UserMixin):
-    """
+        """
         Maps to 'Managers' table.
         Inherits from UserMixin to support Flask-Login.
         """
