@@ -31,7 +31,7 @@ def db_cur():
         if mydb:
             mydb.close()
 
-
+'''
 def seed_seats():
     with db_cur() as cursor:
         cursor.execute("SELECT airplane_id, size FROM Airplanes")
@@ -87,6 +87,7 @@ def seed_full_database():
         # הרצת יצירת המושבים עבור המטוסים החדשים
         seed_seats()
         cursor.commit()
+'''
 
 
 def register_new_customer(data):
@@ -284,21 +285,25 @@ def get_seats_for_flight(flight_id):
 
 
 def get_flight_seat_map(flight_id):
-    """Returns flight details and seat map"""
+    """
+    Fetches seats and organizes them by ROW to fix visual grid alignment issues.
+    Returns a dictionary structure: { row_num: { col_num: seat_object } }
+    """
     with db_cur() as cursor:
+        # 1. Fetch flight info
         query_flight = """
-            SELECT f.*, a.size, a.airplane_id 
+            SELECT f.*, a.airplane_id, a.size 
             FROM Flights f 
             JOIN Airplanes a ON f.airplane_id = a.airplane_id 
             WHERE f.flight_id = %s
         """
         cursor.execute(query_flight, (flight_id,))
         flight = cursor.fetchone()
+        if not flight: return None, {}
 
-        if not flight:
-            return None, []
+        # 2. Fetch all seats + Occupancy status
         query_seats = """
-            SELECT s.row_num, s.column_num, s.class_type,
+            SELECT s.row_num, s.column_num, s.class_type, s.airplane_id,
                    CASE WHEN t.order_code IS NOT NULL THEN 1 ELSE 0 END AS is_taken
             FROM Seats s
             LEFT JOIN Flight_Tickets t 
@@ -306,13 +311,28 @@ def get_flight_seat_map(flight_id):
                 AND s.column_num = t.column_num 
                 AND s.airplane_id = t.airplane_id
                 AND t.flight_id = %s
+                AND t.departure_date = %s
             WHERE s.airplane_id = %s
             ORDER BY s.row_num, s.column_num
         """
-        cursor.execute(query_seats, (flight_id, flight['airplane_id']))
-        seats_list = cursor.fetchall()
+        cursor.execute(query_seats, (flight_id, flight['departure_date'], flight['airplane_id']))
+        raw_seats = cursor.fetchall()
 
-        return flight, seats_list
+        # 3. Reorganize into a structured map: rows[row_num][col_num] = seat
+        # This allows the HTML to iterate 1-6 explicitly and handle gaps.
+        seat_map = {}
+        max_row = 0
+
+        for seat in raw_seats:
+            r = seat['row_num']
+            c = seat['column_num']
+            if r not in seat_map:
+                seat_map[r] = {}
+            seat_map[r][c] = seat
+            if r > max_row: max_row = r
+
+        return flight, {'map': seat_map, 'max_row': max_row}
+
 
 MANAGER_PRICES = {}
 
@@ -326,37 +346,75 @@ def get_current_price(flight_id, class_type):
 
 #Creates a booking
 def create_booking(flight_id, selected_seats, user, guest_data=None):
+    """
+    Updated to support the new schema:
+    1. Fetches price from Classes_In_Flights.
+    2. Uses departure_date as part of the primary key for Flight_Tickets.
+    3. Does NOT save price in Flight_Tickets (as per your schema).
+    """
     with db_cur() as cursor:
         try:
+            # 1. Fetch Flight Departure Date (Required for keys)
+            cursor.execute("SELECT departure_date FROM Flights WHERE flight_id = %s", (flight_id,))
+            res = cursor.fetchone()
+            if not res:
+                return False, "Flight not found", None
+            departure_date = res['departure_date']
+
+            # 2. Generate Order Code
             order_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+            # 3. Handle Customer
             if user.is_authenticated:
                 email = user.id
                 customer_type = 'Registered'
             else:
                 email = guest_data['email']
                 customer_type = 'Unregistered'
-                cursor.execute(
-                    "INSERT IGNORE INTO Unregistered_Customers (email, first_name, last_name, customer_type) VALUES (%s, %s, %s, %s)",
-                    (email, guest_data['first_name'], guest_data['last_name'], customer_type))
+                cursor.execute("SELECT email FROM Unregistered_Customers WHERE email = %s", (email,))
+                if not cursor.fetchone():
+                    cursor.execute("""
+                        INSERT INTO Unregistered_Customers (email, first_name, middle_name, last_name, customer_type)
+                        VALUES (%s, %s, %s, %s, 'Unregistered')
+                    """, (email, guest_data['first_name'], guest_data.get('middle_name'), guest_data['last_name']))
+
+            # 4. Create Order
             cursor.execute("""
-                INSERT INTO Orders (order_code, email, status, order_date, customer_type)
+                INSERT INTO Orders (order_code, customer_email, status, order_date, customer_type)
                 VALUES (%s, %s, 'Active', CURDATE(), %s)
             """, (order_code, email, customer_type))
-            for seat_key in selected_seats:
-                row, col, s_class, airplane_id = seat_key.split('-')
 
-                # NEED TO CHECK THE FALLBACK VALUES
-                price = 350.00 if s_class == 'Business' else 150.00
+            # 5. Process Tickets
+            for seat_key in selected_seats:
+                # Format: "row-col-class-airplane_id"
+                parts = seat_key.split('-')
+                row = parts[0]
+                col = parts[1]
+                s_class = parts[2]
+                airplane_id = "-".join(parts[3:])
+
+                # Verify Price exists (Validation step)
+                # Note: Price is not saved in Ticket anymore, but we check if class exists for this flight
                 cursor.execute("""
-                    INSERT INTO Flight_Tickets (order_code, flight_id, row_num, column_num, class_type, airplane_id, price)
+                    SELECT price FROM Classes_In_Flights 
+                    WHERE flight_id = %s AND departure_date = %s AND class_type = %s AND airplane_id = %s
+                """, (flight_id, departure_date, s_class, airplane_id))
+
+                price_check = cursor.fetchone()
+                if not price_check:
+                    return False, f"Pricing not found for class {s_class}", None
+
+                # Insert Ticket (Note: Price column removed, Date added)
+                cursor.execute("""
+                    INSERT INTO Flight_Tickets 
+                    (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (order_code, flight_id, row, col, s_class, airplane_id, price))
-            cursor.commit()
+                """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id))
+
             return True, "Booking successful!", order_code
         except Exception as e:
             print(f"Booking Error: {e}")
             return False, str(e), None
-
 
 class Worker:
     """
@@ -409,11 +467,10 @@ class FlightAttendant(Worker):
 
 
 class Manager(Worker, UserMixin):
-        """
-        Maps to 'Managers' table.
-        Inherits from UserMixin to support Flask-Login.
-        """
-
+    """
+    Maps to 'Managers' table.
+    Inherits from UserMixin to support Flask-Login.
+    """
     def __init__(self, manager_id, password, first_name, middle_name, last_name, city, street, house_num, start_date):
         super().__init__(first_name, middle_name, last_name, city, street, house_num, start_date)
         self.id = manager_id

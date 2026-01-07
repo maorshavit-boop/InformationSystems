@@ -139,16 +139,16 @@ BEGIN
     
     -- 1. BIG PLANE 1 (AP-BIG-1)
     -- Business: 4 Rows, 4 Cols
-    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 4 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-1'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
+    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-1'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
     -- Economy: 30 Rows, 6 Cols (Starting row 5)
     SET i = 5; WHILE i <= 34 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-BIG-1'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
 
     -- 2. BIG PLANE 2 (AP-BIG-2)
-    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 4 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-2'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
+    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-2'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
     SET i = 5; WHILE i <= 34 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-BIG-2'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
 
     -- 3. BIG PLANE 3 (AP-BIG-3)
-    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 4 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-3'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
+    SET i = 1; WHILE i <= 4 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Business', 'AP-BIG-3'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
     SET i = 5; WHILE i <= 34 DO SET j = 1; WHILE j <= 6 DO INSERT INTO Seats VALUES (i, j, 'Economy', 'AP-BIG-3'); SET j = j + 1; END WHILE; SET i = i + 1; END WHILE;
 
     -- 4. SMALL PLANE 1 (AP-SML-1) - 20 Rows Economy, 6 Cols
