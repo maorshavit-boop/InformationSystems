@@ -60,17 +60,26 @@
 
     {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
     <section class="manager-panel">
-        <h2 style="color: #0056b3;">Manager Dashboard</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="color: #0056b3; margin: 0;">Manager Dashboard</h2>
+
+            <a href="{{ url_for('manager_reports') }}" style="text-decoration: none;">
+                <button style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    📊 View Manager Reports
+                </button>
+            </a>
+        </div>
+
         <p>Manage system flights and pricing below.</p>
         <hr>
 
-        <button onclick="document.getElementById('add-flight-div').style.toggleDisplay()"
+        <button onclick="document.getElementById('add-flight-div').toggleDisplay()"
                 style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">
             + Create New Flight
         </button>
 
-        <div id="add-flight-div" style="margin-top: 20px; border: 1px dashed #ccc; padding: 15px;">
-            [cite_start]<h4>Add New Flight Record </h4>
+        <div id="add-flight-div" style="margin-top: 20px; border: 1px dashed #ccc; padding: 15px; display: none;">
+            <h4>Add New Flight Record</h4>
             <form action="/add_flight" method="POST" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                 <input type="text" name="flight_id" placeholder="Flight ID (e.g., FL105)" required>
                 <input type="date" name="departure_date" required>
@@ -86,7 +95,6 @@
     {% endif %}
 
     <hr>
-
     <section class="search-section">
         <h3>Search Flights</h3>
         <form method="GET" action="/">
