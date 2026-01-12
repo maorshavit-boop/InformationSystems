@@ -54,7 +54,6 @@ def register_new_customer(data):
             ))
             insert_phone = "INSERT INTO Customer_Phones (phone_num, email, customer_type) VALUES (%s, %s, 'Registered')"
             cursor.execute(insert_phone, (data['phone'], data['email']))
-            cursor.commit()
             return True, "Account created successfully!"
         except Exception as e:
             print(f"Signup error: {e}")
