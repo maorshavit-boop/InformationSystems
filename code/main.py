@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 from utils import *
 import os
+from sql_queries import q1, q2, q3, q4, q5
+
 
 # Get the path to the project root (one level up from 'code' folder)
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -67,6 +69,7 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     """Handles the signup process."""
+    """Handles the signup process."""
     if request.method == 'POST':
         # Collect all form fields into a dictionary
         customer_data = request.form.to_dict()
@@ -86,31 +89,37 @@ def logout():
 
 @app.template_filter('map_to_letter')
 def map_to_letter(column_num):
-    # בדיקה למניעת ה-ValueError: אם זה כבר אות, פשוט תחזיר אותה
+    # בדיקה למניעת ה-ValueError
     if isinstance(column_num, str) and not column_num.isdigit():
         return column_num
 
-    mapping = {1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F'}
+    # הוספתי מיפוי לעמודות 7, 8, 9, 10
+    mapping = {
+        1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F',
+        7: 'G', 8: 'H', 9: 'I', 10: 'J'
+    }
     return mapping.get(int(column_num), column_num)
 
 
 @app.route('/book_flight/<string:flight_id>')
 def book_flight(flight_id):
+    # 1. בדיקת הרשאות (מנהלים לא מזמינים)
     if current_user.is_authenticated and current_user.user_type == 'Manager':
         flash("Managers cannot perform bookings.", "danger")
         return redirect(url_for('homepage'))
 
-    # חילוץ נתוני הטיסה והמושבים
+    # 2. חילוץ נתוני הטיסה והמושבים (חובה לבצע זאת לפני הבדיקה!)
     flight_info, seats = get_flight_seat_map(flight_id)
 
+    # 3. בדיקה אם הטיסה קיימת
     if not flight_info:
         flash("Flight not found.", "danger")
         return redirect(url_for('homepage'))
 
-    # שימוש ב-booking.html (במקום Flightseats.html)
+    # 4. הצגת הדף
     return render_template('booking.html',
                            flight_id=flight_id,
-                           all_seats=seats,
+                           all_seats=seats,   # מעביר את אובייקט המושבים המורכב (מילון)
                            flight_info=flight_info)
 
 
@@ -333,6 +342,33 @@ def finalize_booking():
     else:
         flash(f"Booking failed: {message}", "danger")
         return redirect(url_for('homepage'))
+
+@app.route('/manager/reports')
+@login_required
+def manager_reports():
+        # to block who is not manager
+    if current_user.user_type != 'Manager':
+        flash("Access Denied: Managers Only", "danger")
+        return redirect(url_for('homepage'))
+
+    data = {}
+    with db_cur() as cursor:
+        cursor.execute(q1)
+        data['occupancy'] = cursor.fetchall()
+        cursor.execute(q2)
+        data['revenue'] = cursor.fetchall()
+
+        cursor.execute(q3)
+        data['crew'] = cursor.fetchall()
+
+        cursor.execute(q4)
+        data['cancellations'] = cursor.fetchall()
+
+        cursor.execute(q5)
+        data['plane_activity'] = cursor.fetchall()
+
+    return render_template('reports.html', data=data)
+
 
 if __name__ == '__main__':
     #Running in debug mode for easier development

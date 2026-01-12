@@ -2,66 +2,109 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FLYTAU Booking</title>
+    <title>Select Seats - {{ flight_id }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .cabin-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .plane-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .row-number {
+            width: 30px;
+            text-align: right;
+            margin-right: 15px;
+            font-weight: bold;
+            color: #888;
+        }
+        /* רווח למעבר (Aisle) */
+        .aisle-gap {
+            width: 30px;
+        }
+
+        /* צבעים מותאמים */
+        .seat.business { background-color: #1a237e; color: white; border: 1px solid #000; }
+        .seat.economy { background-color: #2196f3; color: white; border: 1px solid #1976d2; }
+        .seat.taken { background-color: #bdbdbd !important; cursor: not-allowed; border: 1px solid #999; }
+    </style>
 </head>
 <body>
     <header>
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" width="150">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="150">
         <nav><a href="/">Back to Flights</a></nav>
     </header>
 
     <main>
-        <div class="plane-container">
-            <h2 style="text-align: center;">Select Your Seats - Flight {{ flight_id }}</h2>
+        <div class="plane-container" style="max-width: 900px;">
+            <h2 style="text-align: center;">Select Your Seats</h2>
+            <h4 style="text-align: center;">Flight {{ flight_id }}</h4>
 
             <div class="legend-container">
                 <div class="legend-item"><div class="legend-box business"></div><span>Business</span></div>
                 <div class="legend-item"><div class="legend-box economy"></div><span>Economy</span></div>
-                <div class="legend-item"><div class="legend-box" style="background:#ffeb3b; border:1px solid #ddd;"></div><span>Selected</span></div>
                 <div class="legend-item"><div class="legend-box taken"></div><span>Taken</span></div>
+                <div class="legend-item"><div class="legend-box" style="background:#ffeb3b; border:1px solid #ddd;"></div><span>Selected</span></div>
             </div>
 
             <form action="/order_summary" method="POST">
                 <input type="hidden" name="flight_id" value="{{ flight_id }}">
 
-                <div class="seat-grid">
-                    {% for seat in all_seats %}
+                <div class="cabin-container">
+                    {% for r in range(1, all_seats.max_row + 1) %}
+                        {% if r in all_seats.map %}
+                        {% set row_seats = all_seats.map[r] %}
+                        {% set row_len = row_seats|length %}
 
-                        {# הזרקת מספר השורה בעמודה הרביעית (בדיוק במעבר המטוס) #}
-                        {% if loop.index0 % 6 == 3 or (seat.column_num|map_to_letter == 'D') %}
-                            {# אם האות היא D או האינדקס הוא 3, נשים את מספר השורה באמצע #}
-                        {% endif %}
+                        <div class="plane-row">
+                            <div class="row-number">{{ r }}</div>
 
-                        {# פתרון בטוח יותר: נבדוק אם הגענו למושב הרביעי בכל שורה (D) #}
-                        {% if seat.column_num|map_to_letter == 'D' %}
-                            <div class="row-label">{{ seat.row_num }}</div>
-                        {% endif %}
+                            {% for col, seat in row_seats.items()|sort %}
+                                <div class="seat-wrapper">
+                                    <input type="checkbox" id="seat-{{ seat.row_num }}-{{ seat.column_num }}"
+                                           name="selected_seats"
+                                           value="{{ seat.row_num }}-{{ seat.column_num }}-{{ seat.class_type }}-{{ seat.airplane_id }}"
+                                           {% if seat.is_taken %} disabled {% endif %}>
 
-                        <div class="seat-wrapper">
-                            <input type="checkbox" id="seat-{{ loop.index }}"
-                                   name="selected_seats"
-                                   value="{{ seat.row_num }}-{{ seat.column_num }}-{{ seat.class_type }}-{{ flight_info.airplane_id }}"
-                                   {% if seat.is_taken %} disabled {% endif %}>
+                                    <label for="seat-{{ seat.row_num }}-{{ seat.column_num }}"
+                                           class="seat {{ seat.class_type|lower }} {{ 'taken' if seat.is_taken }}">
+                                        {{ seat.column_num|map_to_letter }}
+                                    </label>
+                                </div>
 
-                            <label for="seat-{{ loop.index }}"
-                                   class="seat {{ seat.class_type|lower }} {{ 'taken' if seat.is_taken }}">
-                                {{ seat.column_num|map_to_letter }}
-                            </label>
+                                {# --- לוגיקה למרווחים (Aisles) --- #}
+
+                                {# תצורה של 4 מושבים (עסקים/מטוס קטן): 2-2 #}
+                                {% if row_len == 4 and loop.index == 2 %}
+                                    <div class="aisle-gap"></div>
+
+                                {# תצורה של 6 מושבים (תיירים רגיל/עסקים רחב): 3-3 #}
+                                {% elif row_len == 6 and loop.index == 3 %}
+                                    <div class="aisle-gap"></div>
+
+                                {# תצורה של 9 מושבים (תיירים רחב): 3-3-3 #}
+                                {% elif row_len == 9 and (loop.index == 3 or loop.index == 6) %}
+                                    <div class="aisle-gap"></div>
+
+                                {# תצורה של 10 מושבים (A380): 3-4-3 #}
+                                {% elif row_len == 10 and (loop.index == 3 or loop.index == 7) %}
+                                    <div class="aisle-gap"></div>
+                                {% endif %}
+
+                            {% endfor %}
                         </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
 
-                {% if not current_user.is_authenticated %}
-                <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
-                    <h4>Guest Details</h4>
-                    <input type="text" name="guest_first" placeholder="First Name" required>
-                    <input type="text" name="guest_last" placeholder="Last Name" required>
-                    <input type="email" name="guest_email" placeholder="Email" required>
-                </div>
-                {% endif %}
-
-                <div style="text-align: center;">
+                <div style="text-align: center; margin-top: 30px;">
                     <button type="submit" class="confirm-btn">Confirm Selection</button>
                 </div>
             </form>

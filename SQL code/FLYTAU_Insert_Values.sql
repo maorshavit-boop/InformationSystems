@@ -1,12 +1,57 @@
 USE FLYTAU;
 
+-- ==========================================================
+-- 1. ניקוי נתונים מלא (Reset)
+-- ==========================================================
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE TABLE Flight_Tickets;
+TRUNCATE TABLE Orders;
+TRUNCATE TABLE Classes_In_Flights;
+TRUNCATE TABLE Attendants_In_Flights;
+TRUNCATE TABLE Pilots_In_Flights;
+TRUNCATE TABLE Flights;
+TRUNCATE TABLE Seats;
+TRUNCATE TABLE Airplane_Classes;
+TRUNCATE TABLE Airplanes;
+TRUNCATE TABLE Flight_Routes;
+TRUNCATE TABLE Manager_Phones;
+TRUNCATE TABLE Pilot_Phones;
+TRUNCATE TABLE Attendant_Phones;
+TRUNCATE TABLE Customer_Phones;
+TRUNCATE TABLE Registered_Customers;
+TRUNCATE TABLE Unregistered_Customers;
+TRUNCATE TABLE Managers;
+TRUNCATE TABLE Pilots;
+TRUNCATE TABLE Flight_Attendants;
+
+-- מחיקת טבלת עזר אם נשארה מהרצה קודמת
+DROP TABLE IF EXISTS NumberGen;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+-- ==========================================================
+-- 2. יצירת טבלת עזר ליצירת מושבים (במקום לולאות)
+-- ==========================================================
+CREATE TABLE NumberGen (n INT PRIMARY KEY);
+INSERT INTO NumberGen VALUES
+(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),
+(11),(12),(13),(14),(15),(16),(17),(18),(19),(20),
+(21),(22),(23),(24),(25),(26),(27),(28),(29),(30),
+(31),(32),(33),(34),(35),(36),(37),(38),(39),(40),
+(41),(42),(43),(44),(45),(46),(47),(48),(49),(50);
+
+
+-- ==========================================================
+-- 3. הזנת נתונים בסיסיים (מטוסים ומסלולים)
+-- ==========================================================
 INSERT INTO Flight_Routes (source_airport, destination_airport, flight_duration) VALUES
 ('TLV', 'JFK', 660), ('JFK', 'TLV', 630),
 ('TLV', 'LHR', 330), ('TLV', 'ETM', 45),
-('TLV', 'CDG', 290), ('TLV', 'BKK', 660), 
+('TLV', 'CDG', 290), ('TLV', 'BKK', 660),
 ('TLV', 'DXB', 180), ('TLV', 'FCO', 240);
 
--- --- Airplanes (6 Planes as requested) ---
 INSERT INTO Airplanes (airplane_id, manufacturer, purchase_date, size) VALUES
 ('AP-B787-1', 'Boeing', '2020-01-01', 'Big'),
 ('AP-B737-2', 'Boeing', '2019-05-15', 'Small'),
@@ -15,54 +60,66 @@ INSERT INTO Airplanes (airplane_id, manufacturer, purchase_date, size) VALUES
 ('AP-F7X-5',  'Dassault','2022-07-01', 'Small'),
 ('AP-F10X-6', 'Dassault','2023-01-01', 'Big');
 
--- --- Classes ---
 INSERT IGNORE INTO Airplane_Classes (class_type, airplane_id, columns_count, rows_count) VALUES
-('Business', 'AP-B787-1', 4, 5), 
-('Economy', 'AP-B787-1', 9, 30),
+('Business', 'AP-B787-1', 4, 5), ('Economy', 'AP-B787-1', 9, 30),
 ('Economy',  'AP-B737-2', 6, 25),
-('Business', 'AP-A380-3', 6, 10), 
-('Economy', 'AP-A380-3', 10, 40),
+('Business', 'AP-A380-3', 6, 10), ('Economy', 'AP-A380-3', 10, 40),
 ('Economy',  'AP-A320-4', 6, 25),
 ('Economy',  'AP-F7X-5',  4, 15),
-('Business', 'AP-F10X-6', 4, 5), 
-('Economy', 'AP-F10X-6', 6, 20);
+('Business', 'AP-F10X-6', 4, 5), ('Economy', 'AP-F10X-6', 6, 20);
 
--- --- Seats Generation (Procedure) ---
-DELIMITER $$
 
--- 1. מחיקה בטוחה (רק אם קיים)
-DROP PROCEDURE IF EXISTS GenerateSeats$$
+-- ==========================================================
+-- 4. יצירת המושבים (ללא חפיפות וללא שגיאות)
+-- ==========================================================
 
--- 2. יצירה מחדש
-CREATE PROCEDURE GenerateSeats()
-BEGIN
-    DECLARE i INT; DECLARE j INT;
-    -- AP-B787-1
-    SET i=1; WHILE i<=5 DO SET j=1; WHILE j<=4 DO INSERT IGNORE INTO Seats VALUES(i,j,'Business','AP-B787-1'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-    SET i=1; WHILE i<=30 DO SET j=1; WHILE j<=9 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-B787-1'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-    -- AP-B737-2
-    SET i=1; WHILE i<=25 DO SET j=1; WHILE j<=6 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-B737-2'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-    -- AP-A380-3
-    SET i=1; WHILE i<=10 DO SET j=1; WHILE j<=6 DO INSERT IGNORE INTO Seats VALUES(i,j,'Business','AP-A380-3'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-    SET i=1; WHILE i<=40 DO SET j=1; WHILE j<=10 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-A380-3'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-    -- AP-A320-4
-    SET i=1; WHILE i<=25 DO SET j=1; WHILE j<=6 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-A320-4'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-    -- AP-F7X-5
-    SET i=1; WHILE i<=15 DO SET j=1; WHILE j<=4 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-F7X-5'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-    -- AP-F10X-6
-    SET i=1; WHILE i<=5 DO SET j=1; WHILE j<=4 DO INSERT IGNORE INTO Seats VALUES(i,j,'Business','AP-F10X-6'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-    SET i=1; WHILE i<=20 DO SET j=1; WHILE j<=6 DO INSERT IGNORE INTO Seats VALUES(i,j,'Economy','AP-F10X-6'); SET j=j+1; END WHILE; SET i=i+1; END WHILE;
-END$$
+-- === AP-B787-1 ===
+-- Business: Rows 1-5 (4 cols)
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Business', 'AP-B787-1' FROM NumberGen r JOIN NumberGen c WHERE r.n <= 5 AND c.n <= 4;
+-- Economy: Rows 6-35 (9 cols) -> מתחיל אחרי הביזנס
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Economy', 'AP-B787-1' FROM NumberGen r JOIN NumberGen c WHERE r.n BETWEEN 6 AND 35 AND c.n <= 9;
 
-DELIMITER ;
+-- === AP-B737-2 ===
+-- Economy: Rows 1-25 (6 cols)
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Economy', 'AP-B737-2' FROM NumberGen r JOIN NumberGen c WHERE r.n <= 25 AND c.n <= 6;
 
--- 3. הרצה
-CALL GenerateSeats();
+-- === AP-A380-3 ===
+-- Business: Rows 1-10 (6 cols)
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Business', 'AP-A380-3' FROM NumberGen r JOIN NumberGen c WHERE r.n <= 10 AND c.n <= 6;
+-- Economy: Rows 11-50 (10 cols) -> מתחיל אחרי הביזנס
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Economy', 'AP-A380-3' FROM NumberGen r JOIN NumberGen c WHERE r.n BETWEEN 11 AND 50 AND c.n <= 10;
 
--- 4. מחיקה בטוחה בסוף (התיקון כאן)
-DROP PROCEDURE IF EXISTS GenerateSeats;
+-- === AP-A320-4 ===
+-- Economy: Rows 1-25 (6 cols)
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Economy', 'AP-A320-4' FROM NumberGen r JOIN NumberGen c WHERE r.n <= 25 AND c.n <= 6;
 
--- --- Managers (5) ---
+-- === AP-F7X-5 ===
+-- Economy: Rows 1-15 (4 cols)
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Economy', 'AP-F7X-5' FROM NumberGen r JOIN NumberGen c WHERE r.n <= 15 AND c.n <= 4;
+
+-- === AP-F10X-6 ===
+-- Business: Rows 1-5 (4 cols)
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Business', 'AP-F10X-6' FROM NumberGen r JOIN NumberGen c WHERE r.n <= 5 AND c.n <= 4;
+-- Economy: Rows 6-25 (6 cols)
+INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
+SELECT r.n, c.n, 'Economy', 'AP-F10X-6' FROM NumberGen r JOIN NumberGen c WHERE r.n BETWEEN 6 AND 25 AND c.n <= 6;
+
+-- ניקוי טבלת העזר
+DROP TABLE NumberGen;
+
+
+-- ==========================================================
+-- 5. הזנת אנשים, טיסות והזמנות
+-- ==========================================================
+
 INSERT INTO Managers VALUES
 ('M-001', 'pass1', 'Sarah', 'A', 'Connor', 'Tel Aviv', 'Azrieli', '1', '2015-01-01'),
 ('M-002', 'pass2', 'Tony', 'B', 'Stark', 'Herzliya', 'Pituach', '2', '2016-06-15'),
@@ -70,7 +127,6 @@ INSERT INTO Managers VALUES
 ('M-004', 'pass4', 'Clark', 'D', 'Kent', 'Haifa', 'Sea', '4', '2019-01-01'),
 ('M-005', 'pass5', 'Diana', 'E', 'Prince', 'Eilat', 'Sun', '5', '2020-01-01');
 
--- --- Pilots (22) ---
 INSERT INTO Pilots VALUES
 ('P-001', 'Maverick', 'M', 'Mitchell', 'Tel Aviv', 'A', '1', '2010-01-01', TRUE),
 ('P-002', 'Iceman', 'K', 'Kazansky', 'Haifa', 'B', '2', '2011-01-01', TRUE),
@@ -95,7 +151,6 @@ INSERT INTO Pilots VALUES
 ('P-021', 'Doron', 'A', 'Sason', 'Holon', 'K', '21', '2016-04-01', TRUE),
 ('P-022', 'Maya', 'T', 'Dagan', 'Raanana', 'A', '22', '2019-07-20', FALSE);
 
--- --- Flight Attendants (45) ---
 INSERT INTO Flight_Attendants VALUES
 ('FA-001', 'Rachel', 'G', 'Green', 'Tel Aviv', 'A', '1', '2018-01-01', TRUE),
 ('FA-002', 'Monica', 'G', 'Geller', 'Tel Aviv', 'B', '2', '2018-02-01', TRUE),
@@ -143,7 +198,6 @@ INSERT INTO Flight_Attendants VALUES
 ('FA-044', 'Noam', 'X', 'Bar', 'Jerusalem', 'RR', '44', '2020-04-04', FALSE),
 ('FA-045', 'Shir', 'Y', 'Tal', 'Rishon', 'SS', '45', '2019-05-05', TRUE);
 
--- --- Flights (12 Flights) ---
 INSERT INTO Flights VALUES
 ('FL-101', '2026-05-01', 'AP-B787-1', 'TLV', 'JFK', 'Active', '23:00:00', 'R1'),
 ('FL-102', '2026-05-02', 'AP-B737-2', 'TLV', 'LHR', 'Active', '16:00:00', 'R3'),
@@ -158,8 +212,7 @@ INSERT INTO Flights VALUES
 ('FL-111', '2026-06-15', 'AP-B787-1', 'TLV', 'BKK', 'Active', '14:00:00', 'R1'),
 ('FL-112', '2026-06-20', 'AP-B737-2', 'TLV', 'DXB', 'Active', '10:00:00', 'R2');
 
--- --- Crew Assignments ---
-INSERT INTO Pilots_In_Flights (pilot_id, flight_id, departure_date) VALUES 
+INSERT INTO Pilots_In_Flights (pilot_id, flight_id, departure_date) VALUES
 ('P-001','FL-101','2026-05-01'), ('P-002','FL-101','2026-05-01'), ('P-003','FL-101','2026-05-01'),
 ('P-006','FL-102','2026-05-02'), ('P-007','FL-102','2026-05-02'),
 ('P-004','FL-103','2026-05-03'), ('P-005','FL-103','2026-05-03'), ('P-008','FL-103','2026-05-03'),
@@ -173,7 +226,7 @@ INSERT INTO Pilots_In_Flights (pilot_id, flight_id, departure_date) VALUES
 ('P-015','FL-111','2026-06-15'), ('P-017','FL-111','2026-06-15'),
 ('P-021','FL-112','2026-06-20');
 
-INSERT INTO Attendants_In_Flights (attendant_id, flight_id, departure_date) VALUES 
+INSERT INTO Attendants_In_Flights (attendant_id, flight_id, departure_date) VALUES
 ('FA-001','FL-101','2026-05-01'), ('FA-002','FL-101','2026-05-01'), ('FA-003','FL-101','2026-05-01'), ('FA-004','FL-101','2026-05-01'),
 ('FA-007','FL-102','2026-05-02'), ('FA-008','FL-102','2026-05-02'),
 ('FA-010','FL-103','2026-05-03'), ('FA-011','FL-103','2026-05-03'), ('FA-012','FL-103','2026-05-03'),
@@ -187,7 +240,6 @@ INSERT INTO Attendants_In_Flights (attendant_id, flight_id, departure_date) VALU
 ('FA-025','FL-111','2026-06-15'), ('FA-027','FL-111','2026-06-15'),
 ('FA-031','FL-112','2026-06-20');
 
--- --- Flight Prices (Classes_In_Flights) ---
 INSERT INTO Classes_In_Flights VALUES
 ('FL-101', '2026-05-01', 'Business', 'AP-B787-1', 1500), ('FL-101', '2026-05-01', 'Economy', 'AP-B787-1', 800),
 ('FL-102', '2026-05-02', 'Economy', 'AP-B737-2', 400),
@@ -202,7 +254,6 @@ INSERT INTO Classes_In_Flights VALUES
 ('FL-111', '2026-06-15', 'Business', 'AP-B787-1', 1550), ('FL-111', '2026-06-15', 'Economy', 'AP-B787-1', 750),
 ('FL-112', '2026-06-20', 'Economy', 'AP-B737-2', 450);
 
--- --- Orders (15 Orders) ---
 INSERT IGNORE INTO Orders VALUES
 ('ORD-001','reg1@test.com','Active','2026-04-01','Registered'), ('ORD-002','reg2@test.com','Active','2026-04-02','Registered'),
 ('ORD-003','guest1@test.com','Active','2026-04-10','Unregistered'), ('ORD-004','guest2@test.com','Active','2026-04-15','Unregistered'),
@@ -213,7 +264,6 @@ INSERT IGNORE INTO Orders VALUES
 ('ORD-013','guest1@test.com','Active','2026-05-17','Unregistered'), ('ORD-014','reg1@test.com','Active','2026-05-18','Registered'),
 ('ORD-015','reg2@test.com','Active','2026-05-19','Registered');
 
--- --- Tickets (Many Tickets) ---
 INSERT INTO Flight_Tickets (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id) VALUES
 ('ORD-001', 'FL-101', '2026-05-01', 1, 1, 'Business', 'AP-B787-1'),
 ('ORD-002', 'FL-101', '2026-05-01', 1, 2, 'Business', 'AP-B787-1'),
