@@ -3,7 +3,7 @@ USE FLYTAU;
 -- ==========================================================
 -- 1. Average Capacity of Executed Flights
 -- ==========================================================
-SELECT AVG(occupied_seats / total_seats) * 100 AS avg_capacity_percentage
+SELECT AVG(occupied_seats / total_seats) * 100.0 AS avg_capacity_percentage
 FROM (
 SELECT F.flight_id, F.departure_date,
         -- Count tickets sold for this flight (Comparing both ID and Date)
