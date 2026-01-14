@@ -198,6 +198,7 @@ CREATE TABLE Flight_Tickets (
     column_num INT,
     class_type ENUM('Economy','Business'),
     airplane_id VARCHAR(20),
+    price DECIMAL (10 , 2),
     PRIMARY KEY (order_code, flight_id, departure_date, row_num, column_num, class_type),
     FOREIGN KEY (order_code) REFERENCES Orders(order_code),
     FOREIGN KEY (flight_id, departure_date) REFERENCES Flights(flight_id, departure_date),

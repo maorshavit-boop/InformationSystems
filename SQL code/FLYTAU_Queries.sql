@@ -3,9 +3,9 @@ USE FLYTAU;
 -- ==========================================================
 -- 1. Average Capacity of Executed Flights
 -- ==========================================================
-SELECT AVG(occupied_seats / total_seats) * 100.0 AS avg_capacity_percentage
+SELECT AVG((occupied_seats * 100)/ total_seats)  AS avg_capacity_percentage
 FROM (
-SELECT F.flight_id, F.departure_date,
+    SELECT F.flight_id, F.departure_date,
         -- Count tickets sold for this flight (Comparing both ID and Date)
         (SELECT COUNT(*) 
          FROM Flight_Tickets FT 
@@ -27,17 +27,12 @@ SELECT F.flight_id, F.departure_date,
 -- ==========================================================
 -- 2. Revenue by Plane Size, Manufacturer, and Class
 -- ==========================================================
-SELECT A.size AS plane_size, A.manufacturer, FT.class_type, SUM(CIF.price) AS total_revenue -- Revenue calculated using the price from linking table
+SELECT CONCAT(A.manufacturer, ' ', A.size, ' (', FT.class_type, ')') AS label,
+       SUM(FT.price) AS total_revenue
 FROM Flight_Tickets FT
 JOIN Orders O ON FT.order_code = O.order_code
 JOIN Airplanes A ON FT.airplane_id = A.airplane_id
--- Join to pricing table using all 4 keys to get the correct historical price
-JOIN Classes_In_Flights CIF 
-    ON FT.flight_id = CIF.flight_id 
-    AND FT.departure_date = CIF.departure_date 
-    AND FT.class_type = CIF.class_type
-    AND FT.airplane_id = CIF.airplane_id
-WHERE O.status IN ('Active', 'Executed') 
+WHERE O.status IN ('Active', 'Executed')
 GROUP BY A.size, A.manufacturer, FT.class_type
 ORDER BY total_revenue DESC;
 

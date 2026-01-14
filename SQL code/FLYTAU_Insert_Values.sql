@@ -264,19 +264,19 @@ INSERT IGNORE INTO Orders VALUES
 ('ORD-013','guest1@test.com','Active','2026-05-17','Unregistered'), ('ORD-014','reg1@test.com','Active','2026-05-18','Registered'),
 ('ORD-015','reg2@test.com','Active','2026-05-19','Registered');
 
-INSERT INTO Flight_Tickets (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id) VALUES
-('ORD-001', 'FL-101', '2026-05-01', 1, 1, 'Business', 'AP-B787-1'),
-('ORD-002', 'FL-101', '2026-05-01', 1, 2, 'Business', 'AP-B787-1'),
-('ORD-003', 'FL-102', '2026-05-02', 1, 1, 'Economy', 'AP-B737-2'),
-('ORD-004', 'FL-104', '2026-05-04', 1, 1, 'Economy', 'AP-A320-4'),
-('ORD-005', 'FL-102', '2026-05-02', 2, 1, 'Economy', 'AP-B737-2'),
-('ORD-006', 'FL-103', '2026-05-03', 1, 1, 'Business', 'AP-A380-3'),
-('ORD-007', 'FL-104', '2026-05-04', 2, 1, 'Economy', 'AP-A320-4'),
-('ORD-008', 'FL-105', '2026-05-10', 1, 1, 'Business', 'AP-F10X-6'),
-('ORD-009', 'FL-105', '2026-05-10', 1, 2, 'Business', 'AP-F10X-6'),
-('ORD-010', 'FL-108', '2026-06-05', 1, 1, 'Economy', 'AP-B737-2'),
-('ORD-011', 'FL-109', '2026-06-10', 1, 1, 'Business', 'AP-B787-1'),
-('ORD-012', 'FL-109', '2026-06-10', 1, 2, 'Business', 'AP-B787-1'),
-('ORD-013', 'FL-110', '2026-06-12', 1, 1, 'Economy', 'AP-A320-4'),
-('ORD-014', 'FL-111', '2026-06-15', 1, 1, 'Business', 'AP-B787-1'),
-('ORD-015', 'FL-112', '2026-06-20', 1, 1, 'Economy', 'AP-B737-2');
+INSERT INTO Flight_Tickets (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price) VALUES
+('ORD-001', 'FL-101', '2026-05-01', 1, 1, 'Business', 'AP-B787-1', 1500),
+('ORD-002', 'FL-101', '2026-05-01', 1, 2, 'Business', 'AP-B787-1', 1500),
+('ORD-003', 'FL-102', '2026-05-02', 1, 1, 'Economy',  'AP-B737-2', 400),
+('ORD-004', 'FL-104', '2026-05-04', 1, 1, 'Economy',  'AP-A320-4', 150),
+('ORD-005', 'FL-102', '2026-05-02', 2, 1, 'Economy',  'AP-B737-2', 400),
+('ORD-006', 'FL-103', '2026-05-03', 1, 1, 'Business', 'AP-A380-3', 1800),
+('ORD-007', 'FL-104', '2026-05-04', 2, 1, 'Economy',  'AP-A320-4', 150),
+('ORD-008', 'FL-105', '2026-05-10', 1, 1, 'Business', 'AP-F10X-6', 2000),
+('ORD-009', 'FL-105', '2026-05-10', 1, 2, 'Business', 'AP-F10X-6', 2000),
+('ORD-010', 'FL-108', '2026-06-05', 1, 1, 'Economy',  'AP-B737-2', 380),
+('ORD-011', 'FL-109', '2026-06-10', 1, 1, 'Business', 'AP-B787-1', 1600),
+('ORD-012', 'FL-109', '2026-06-10', 1, 2, 'Business', 'AP-B787-1', 1600),
+('ORD-013', 'FL-110', '2026-06-12', 1, 1, 'Economy',  'AP-A320-4', 160),
+('ORD-014', 'FL-111', '2026-06-15', 1, 1, 'Business', 'AP-B787-1', 1550),
+('ORD-015', 'FL-112', '2026-06-20', 1, 1, 'Economy',  'AP-B737-2', 450);

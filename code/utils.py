@@ -108,7 +108,7 @@ def get_customer_history(email):
             FROM Orders O
             JOIN Flight_Tickets FT ON O.order_code = FT.order_code
             JOIN Flights F ON FT.flight_id = F.flight_id
-            WHERE O.email = %s
+            WHERE O.customer_email = %s  -- FIXED: changed from O.email to O.customer_email
             GROUP BY O.order_code, O.status, O.order_date, F.flight_id, 
                      F.source_airport, F.destination_airport, F.departure_date, F.departure_time
             ORDER BY O.order_date DESC
@@ -348,9 +348,9 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
                 # Insert Ticket (Note: Price column removed, Date added)
                 cursor.execute("""
                     INSERT INTO Flight_Tickets 
-                    (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id))
+                    (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id, price_check['price']))
 
             return True, "Booking successful!", order_code
         except Exception as e:
