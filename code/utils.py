@@ -277,12 +277,28 @@ def get_flight_seat_map(flight_id):
 
 MANAGER_PRICES = {}
 
-#NEED TO CHECK ABOUT FALLBACK VALUES!!
+
 def get_current_price(flight_id, class_type):
-    """Retrieves the price set by manager or uses fallback values."""
-    if flight_id in MANAGER_PRICES and class_type in MANAGER_PRICES[flight_id]:
-        return MANAGER_PRICES[flight_id][class_type]
-    return 350.00 if class_type == 'Business' else 150.00
+    """
+    Retrieves the price for a specific flight and class directly from the database.
+    Raises an error if no price is found, preventing 'free' tickets.
+    """
+    with db_cur() as cursor:
+        query = """
+            SELECT cif.price 
+            FROM Classes_In_Flights cif
+            JOIN Flights f ON cif.flight_id = f.flight_id 
+                          AND cif.departure_date = f.departure_date
+            WHERE cif.flight_id = %s AND cif.class_type = %s
+        """
+        cursor.execute(query, (flight_id, class_type))
+        result = cursor.fetchone()
+
+        if result:
+            return float(result['price'])
+
+        # Raise an error to stop execution immediately if data is missing
+        raise ValueError(f"CRITICAL: No price set for Flight {flight_id} in {class_type} class. Please choose a different ticket")
 
 
 #Creates a booking
