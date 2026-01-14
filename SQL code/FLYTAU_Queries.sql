@@ -91,13 +91,13 @@ SELECT
     Stats.activity_month,
     Stats.flights_executed,
     Stats.flights_cancelled,
-    -- Utilization: Minutes in air / Total minutes in a 30-day month
-    ROUND((Stats.total_flight_minutes / (30 * 24 * 60)) * 100, 2) AS utilization_percentage,
-    
+    -- Utilization: Days flown / 30 days
+    ROUND((Stats.days_flown / 30) * 100, 2) AS utilization_percentage,
+
     -- Subquery to find the dominant route (most frequent)
     (SELECT CONCAT(source_airport, '-', destination_airport)
      FROM Flights F2
-     WHERE F2.airplane_id = Stats.airplane_id 
+     WHERE F2.airplane_id = Stats.airplane_id
        AND DATE_FORMAT(F2.departure_date, '%Y-%m') = Stats.activity_month
        AND F2.status = 'Arrived'
      GROUP BY source_airport, destination_airport
@@ -106,14 +106,15 @@ SELECT
     ) AS dominant_route
 
 FROM (
-    SELECT 
+    SELECT
         F.airplane_id,
         DATE_FORMAT(F.departure_date, '%Y-%m') AS activity_month,
         SUM(CASE WHEN F.status = 'Arrived' THEN 1 ELSE 0 END) AS flights_executed,
         SUM(CASE WHEN F.status = 'Cancelled' THEN 1 ELSE 0 END) AS flights_cancelled,
-        -- Sum minutes only for executed flights
-        SUM(CASE WHEN F.status = 'Arrived' THEN R.flight_duration ELSE 0 END) AS total_flight_minutes
+        -- Count distinct days where the plane flew (status='Arrived')
+        COUNT(DISTINCT CASE WHEN F.status = 'Arrived' THEN F.departure_date END) AS days_flown
     FROM Flights F
+    -- Join is still kept to align with previous logic, though strictly not needed for days count
     JOIN Flight_Routes R ON F.source_airport = R.source_airport AND F.destination_airport = R.destination_airport
     GROUP BY F.airplane_id, DATE_FORMAT(F.departure_date, '%Y-%m')
 ) AS Stats

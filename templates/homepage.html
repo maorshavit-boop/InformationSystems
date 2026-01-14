@@ -3,175 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLYTAU - Home</title>
+    <title>FLYTAU - Departures</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        /* Specific styles for the Manager Dashboard visibility */
-        .manager-panel { background: #f4f7f6; border: 2px solid #0056b3; padding: 20px; border-radius: 12px; margin-bottom: 30px; }
-        .form-group { margin-bottom: 10px; }
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
-        .status-active { background: #d4edda; color: #155724; }
-        .status-cancelled { background: #f8d7da; color: #721c24; }
-    </style>
 </head>
 <body>
 
 <header>
     <div class="header-container">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" class="logo" width="120">
-
-        <nav>
-            <a href="/">Home</a>
-            {% if current_user.is_authenticated and current_user.user_type == 'Registered' %}
-                <a href="/mytrips">My Trips</a>
-            {% endif %}
-
+        <nav class="header-left-nav">
+            <a href="/" class="nav-link-orange">DEPARTURES</a>
             {% if current_user.is_authenticated %}
-                <span style="margin-left: 20px;">Welcome, <strong>{{ current_user.first_name }}</strong> ({{ current_user.user_type }})</span>
-                <a href="/logout" style="margin-left: 10px; color: #dc3545;">Logout</a>
+                {% if current_user.user_type == 'Registered' %}
+                    <a href="/mytrips" class="nav-link-orange">MY TRIPS</a>
+                {% endif %}
+                <a href="/logout" class="nav-link-orange">LOGOUT</a>
             {% endif %}
         </nav>
+
+        <div class="header-center">
+            {% if current_user.is_authenticated %}
+                <span class="welcome-text-large">WELCOME BACK, <span class="user-name">{{ current_user.first_name }}</span></span>
+            {% else %}
+                <span class="welcome-text-large" style="color: #444;">/// GUEST ACCESS ///</span>
+            {% endif %}
+        </div>
+
+        <div class="header-right-logo">
+             <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" class="logo dimmed-logo" width="140">
+        </div>
     </div>
 </header>
 
-<main class="container">
+<main class="main-content">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-container">
           {% for category, message in messages %}
-            <p class="flash-message {{ category }}">{{ message }}</p>
+            <div class="flash-message {{ category }}">
+                <span class="icon">ℹ</span> {{ message }}
+            </div>
           {% endfor %}
         </div>
       {% endif %}
     {% endwith %}
 
     {% if not current_user.is_authenticated %}
-    <section class="login-section">
-        <h3>Login to FLYTAU</h3>
-        <form action="/login" method="POST">
-            <input type="text" name="id_or_email" placeholder="Email or Manager ID" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <p>New customer? <a href="/signup">Sign up here</a></p>
+    <section class="login-overlay">
+        <div class="login-card">
+            <h2 class="login-title">Member Login</h2>
+            <p class="login-subtitle">Please enter your credentials</p>
+
+            <form action="/login" method="POST" class="login-form">
+                <div class="input-group">
+                    <label>ID / Email</label>
+                    <input type="text" name="id_or_email" placeholder="Email or ID" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+
+            <div class="login-footer">
+                <p>Don't have an account? <a href="/signup">Register Here</a></p>
+            </div>
+        </div>
     </section>
     {% endif %}
 
     {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
     <section class="manager-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="color: #0056b3; margin: 0;">Manager Dashboard</h2>
-
-            <a href="{{ url_for('manager_reports') }}" style="text-decoration: none;">
-                <button style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                    📊 View Manager Reports
+        <div class="manager-header">
+            <h2>COMMAND CENTER</h2>
+            <div class="manager-actions">
+                <a href="{{ url_for('manager_reports') }}" class="btn-report">📊 SYSTEM REPORTS</a>
+                <button onclick="document.getElementById('add-flight-div').toggleDisplay()" class="btn-create">
+                    + NEW FLIGHT PLAN
                 </button>
-            </a>
+            </div>
         </div>
 
-        <p>Manage system flights and pricing below.</p>
-        <hr>
-
-        <button onclick="document.getElementById('add-flight-div').toggleDisplay()"
-                style="background: #28a745; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">
-            + Create New Flight
-        </button>
-
-        <div id="add-flight-div" style="margin-top: 20px; border: 1px dashed #ccc; padding: 15px; display: none;">
-            <h4>Add New Flight Record</h4>
-            <form action="/add_flight" method="POST" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <input type="text" name="flight_id" placeholder="Flight ID (e.g., FL105)" required>
+        <div id="add-flight-div" class="add-flight-form" style="display: none;">
+            <h4>// UPLOAD NEW FLIGHT DATA</h4>
+            <form action="/add_flight" method="POST" class="grid-form">
+                <input type="text" name="flight_id" placeholder="FLIGHT ID (FL-XXX)" required>
                 <input type="date" name="departure_date" required>
                 <input type="time" name="departure_time" required>
-                <input type="text" name="source_airport" placeholder="Source (e.g., TLV)" required>
-                <input type="text" name="destination_airport" placeholder="Destination (e.g., JFK)" required>
-                <input type="text" name="airplane_id" placeholder="Airplane ID" required>
-                <input type="text" name="runway_num" placeholder="Runway Number" required>
-                <button type="submit" style="grid-column: span 3; background: #0056b3; color: white;">Save Flight</button>
+                <input type="text" name="source_airport" placeholder="ORIGIN (TLV)" required>
+                <input type="text" name="destination_airport" placeholder="DESTINATION (JFK)" required>
+                <input type="text" name="airplane_id" placeholder="AIRCRAFT ID" required>
+                <input type="text" name="runway_num" placeholder="RUNWAY" required>
+                <button type="submit" class="btn-save">EXECUTE UPLOAD</button>
             </form>
         </div>
     </section>
     {% endif %}
 
-    <hr>
     <section class="search-section">
-        <h3>Search Flights</h3>
-        <form method="GET" action="/">
-            <input type="text" name="source" placeholder="From (e.g. TLV)" value="{{ request.args.get('source', '') }}">
-            <input type="text" name="dest" placeholder="To (e.g. JFK)" value="{{ request.args.get('dest', '') }}">
-            <input type="date" name="date" value="{{ request.args.get('date', '') }}">
-            <button type="submit">Search</button>
+        <form method="GET" action="/" class="flight-search-bar">
+            <div class="search-input">
+                <span class="label">FROM</span>
+                <input type="text" name="source" placeholder="TLV" value="{{ request.args.get('source', '') }}">
+            </div>
+            <div class="search-input">
+                <span class="label">TO</span>
+                <input type="text" name="dest" placeholder="ANYWHERE" value="{{ request.args.get('dest', '') }}">
+            </div>
+            <div class="search-input">
+                <span class="label">DATE</span>
+                <input type="date" name="date" value="{{ request.args.get('date', '') }}">
+            </div>
+            <button type="submit" class="search-btn">SCAN FLIGHTS</button>
         </form>
     </section>
 
-    <section class="flights-display">
-        <h3>Available Flights</h3>
-        <table border="1" style="width: 100%; text-align: left; border-collapse: collapse;">
-            <thead>
-                <tr style="background: #f8f9fa;">
-                    <th>Flight ID</th>
-                    <th>Route</th>
-                    <th>Departure Date & Time</th>
-                    {% if current_user.user_type == 'Manager' %}
-                        <th>Status</th> {% endif %}
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for flight in flights %}
-                <tr>
-                    <td><strong>{{ flight.flight_id }}</strong></td>
-                    <td>{{ flight.source_airport }} ➝ {{ flight.destination_airport }}</td>
-                    <td>{{ flight.departure_date }} at {{ flight.departure_time }}</td>
+    <section class="fids-display">
+        <div class="fids-header">
+            <span>FLIGHT</span>
+            <span>DESTINATION</span>
+            <span>TIME</span>
+            <span>GATE/RWY</span>
+            <span>STATUS</span>
+            <span>ACTION</span>
+        </div>
 
-                    {% if current_user.user_type == 'Manager' %}
-                    <td>
-                        <span class="status-badge {{ 'status-active' if flight.status == 'Active' else 'status-cancelled' }}">
-                            {{ flight.status }}
-                        </span>
-                    </td>
+        <div class="fids-board">
+            {% for flight in flights %}
+            <div class="fids-row {{ 'row-cancelled' if flight.status == 'Cancelled' else '' }}">
+                <div class="col-flight">{{ flight.flight_id }}</div>
+                <div class="col-dest">
+                    <span class="code">{{ flight.destination_airport }}</span>
+                    <span class="route-line">← {{ flight.source_airport }}</span>
+                </div>
+                <div class="col-time">{{ flight.departure_time }} <span class="date-small">{{ flight.departure_date }}</span></div>
+                <div class="col-gate">{{ flight.runway_num }}</div>
+
+                <div class="col-status">
+                    {% if flight.status == 'Active' %}
+                        <span class="status-blink text-green">ON TIME</span>
+                    {% elif flight.status == 'Cancelled' %}
+                        <span class="text-red">CANCELLED</span>
+                    {% elif flight.status == 'Arrived' %}
+                         <span class="text-gray">LANDED</span>
+                    {% else %}
+                        <span class="text-yellow">{{ flight.status|upper }}</span>
                     {% endif %}
+                </div>
 
-                    <td>
-                        {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
-                            {% if flight.status == 'Active' %}
-                            <form action="{{ url_for('cancel_flight', flight_id=flight.flight_id) }}" method="POST" onsubmit="return confirm('Cancel this flight and refund all passengers?');">
-                                <button type="submit" style="background: #dc3545; color: white; padding: 5px 10px; border: none; cursor: pointer;">Cancel Flight</button>
-                            </form>
-                            {% else %}
-                                <span style="color: #999;">Locked</span>
-                            {% endif %}
+                <div class="col-action">
+                    {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
+                        {% if flight.status == 'Active' %}
+                        <form action="{{ url_for('cancel_flight', flight_id=flight.flight_id) }}" method="POST" onsubmit="return confirm('Cancel this flight and refund all passengers?');">
+                            <button type="submit" class="action-btn btn-danger">ABORT</button>
+                        </form>
                         {% else %}
-                            <a href="{{ url_for('book_flight', flight_id=flight.flight_id) }}">
-                                <button type="button" style="background: #007bff; color: white; padding: 5px 15px; border: none; cursor: pointer;">Book Now</button>
-                            </a>
+                            <span class="locked-icon">🔒</span>
                         {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px;">No flights found matching your criteria.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    {% else %}
+                        {% if flight.status == 'Active' %}
+                            <a href="{{ url_for('book_flight', flight_id=flight.flight_id) }}" class="action-btn btn-book">BOOK</a>
+                        {% else %}
+                            <span class="no-book">-</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="fids-empty">
+                NO FLIGHTS SCHEDULED FOR CURRENT PARAMETERS.
+            </div>
+            {% endfor %}
+        </div>
     </section>
 
 </main>
 
 <footer>
-    [cite_start]<p>© 2026 FLYTAU Airlines. All rights reserved. [cite: 107]</p>
+    <p class="scrolling-text">/// WELCOME TO FLYTAU /// PLEASE KEEP YOUR LUGGAGE UNATTENDED AT YOUR OWN RISK /// ENJOY YOUR FLIGHT ///</p>
 </footer>
 
 <script>
-    // Simple helper to toggle management forms
     HTMLElement.prototype.toggleDisplay = function() {
-        if (this.style.display === 'none' || this.style.display === '') {
-            this.style.display = 'block';
-        } else {
-            this.style.display = 'none';
-        }
+        this.style.display = (this.style.display === 'none' || this.style.display === '') ? 'grid' : 'none';
     };
 </script>
 
