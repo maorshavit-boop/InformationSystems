@@ -35,13 +35,16 @@ def db_cur():
 def register_new_customer(data):
     """
     Backend logic for user signup.
-    Inserts data into Registered_Customers and Customer_Phones.
+    Inserts data into Registered_Customers and Customer_Phones (supports multiple phones).
     """
     with db_cur() as cursor:
         try:
+            # Check if email exists
             cursor.execute("SELECT email FROM Registered_Customers WHERE email = %s", (data['email'],))
             if cursor.fetchone():
                 return False, "Email already registered."
+
+            # Insert User Basic Info
             insert_cust = """
                 INSERT INTO Registered_Customers 
                 (email, first_name, middle_name, last_name, passport_num, registration_date, birth_date, password, customer_type)
@@ -52,9 +55,24 @@ def register_new_customer(data):
                 data['last_name'], data['passport_num'], data['birth_date'],
                 data['password']
             ))
+
+            # Insert Multiple Phones
             insert_phone = "INSERT INTO Customer_Phones (phone_num, email, customer_type) VALUES (%s, %s, 'Registered')"
-            cursor.execute(insert_phone, (data['phone'], data['email']))
+
+            # Use the list we created in main.py
+            phone_list = data.get('phones', [])
+
+            # If for some reason it's a string (legacy support), make it a list
+            if isinstance(phone_list, str):
+                phone_list = [phone_list]
+
+            for phone in phone_list:
+                # Basic validation to ensure empty inputs aren't saved
+                if phone and phone.strip():
+                    cursor.execute(insert_phone, (phone.strip(), data['email']))
+
             return True, "Account created successfully!"
+
         except Exception as e:
             print(f"Signup error: {e}")
             return False, "An error occurred during registration."
@@ -88,10 +106,9 @@ returns fights by users filters
 from datetime import datetime, timedelta
 
 
-def get_customer_history(email):
+def get_customer_history(email, status_filter=None):
     """
-    Returns all orders for a specific user, including flight details (destination, date)
-    and total price.
+    Returns all orders for a specific user, filtered by status if provided.
     """
     with db_cur() as cursor:
         query = """
@@ -108,14 +125,26 @@ def get_customer_history(email):
             FROM Orders O
             JOIN Flight_Tickets FT ON O.order_code = FT.order_code
             JOIN Flights F ON FT.flight_id = F.flight_id
-            WHERE O.customer_email = %s  -- FIXED: changed from O.email to O.customer_email
+            WHERE O.customer_email = %s 
+        """
+        params = [email]
+
+        # Add Status Filter Logic
+        if status_filter and status_filter != 'All':
+            if status_filter == 'Cancelled':
+                query += " AND O.status LIKE 'Cancelled%'"  # Covers both 'Cancelled by system/customer'
+            else:
+                query += " AND O.status = %s"
+                params.append(status_filter)
+
+        query += """
             GROUP BY O.order_code, O.status, O.order_date, F.flight_id, 
                      F.source_airport, F.destination_airport, F.departure_date, F.departure_time
             ORDER BY O.order_date DESC
         """
-        cursor.execute(query, (email,))
-        return cursor.fetchall()
 
+        cursor.execute(query, tuple(params))
+        return cursor.fetchall()
 
 
 def get_order_by_code(order_code, email):

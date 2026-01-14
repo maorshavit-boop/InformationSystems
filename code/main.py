@@ -69,10 +69,13 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     """Handles the signup process."""
-    """Handles the signup process."""
     if request.method == 'POST':
-        # Collect all form fields into a dictionary
+        # 1. Get standard fields
         customer_data = request.form.to_dict()
+
+        # 2. EXPLICITLY get the list of phones (overwriting the single value)
+        customer_data['phones'] = request.form.getlist('phone')
+
         # Call the backend logic
         success, message = register_new_customer(customer_data)
         if success:
@@ -175,18 +178,22 @@ def set_flights_price():
     flash(f"Prices for flight {flight_id} updated successfully!", "success")
     return redirect(url_for('homepage')) # Or manager dashboard
 
+
 @app.route('/mytrips')
 @login_required
 def my_trips():
-    """Displays the order history for the registered user."""
-    # Ensure only registered users can access this page
+    """Displays the order history for the registered user with filtering."""
     if current_user.user_type != 'Registered':
         flash("Only registered customers have a saved history.", "warning")
         return redirect(url_for('homepage'))
 
-    # Fetch data using the utility function
-    orders = get_customer_history(current_user.email)
-    return render_template('mytrips.html', orders=orders)
+    # Get filter from URL, default to 'All'
+    status_filter = request.args.get('status', 'All')
+
+    # Pass the filter to the database function
+    orders = get_customer_history(current_user.email, status_filter)
+
+    return render_template('mytrips.html', orders=orders, current_filter=status_filter)
 
 
 @app.route('/cancel_order/<string:order_code>', methods=['POST'])

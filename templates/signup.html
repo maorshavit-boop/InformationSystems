@@ -1,16 +1,94 @@
-<h2>Join FLYTAU</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up - FLYTAU</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Specific styling for the dynamic phone inputs */
+        .phone-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .phone-group input {
+            flex-grow: 1;
+        }
+        .btn-add, .btn-remove {
+            width: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            color: white;
+            border-radius: 4px;
+        }
+        .btn-add { background-color: #28a745; }
+        .btn-remove { background-color: #dc3545; }
+
+        /* Center the form like the login page */
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        form { background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; backdrop-filter: blur(10px); width: 350px; text-align: center; color: white; }
+        input { width: 100%; padding: 10px; margin: 10px 0; background: rgba(0,0,0,0.5); border: 1px solid #555; color: white; box-sizing: border-box; }
+        button[type="submit"] { width: 100%; padding: 12px; background: #ffb400; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
 <form action="/signup" method="POST">
+    <h2>Join FLYTAU</h2>
+
     <input type="email" name="email" placeholder="Email (Unique)" required>
     <input type="password" name="password" placeholder="Password" required>
-    <hr>
+    <hr style="border-color: #555;">
+
     <input type="text" name="first_name" placeholder="First Name (English)" required>
     <input type="text" name="middle_name" placeholder="Middle Name (Optional)">
     <input type="text" name="last_name" placeholder="Last Name (English)" required>
-    <hr>
+    <hr style="border-color: #555;">
+
     <input type="text" name="passport_num" placeholder="Passport Number" required>
-    <label for="birth_date">Birth Date:</label>
+
+    <label for="birth_date" style="display:block; text-align:left; font-size:0.8em; color:#aaa;">Birth Date:</label>
     <input type="date" name="birth_date" required>
-    <input type="text" name="phone" placeholder="Phone Number" required>
+
+    <div id="phone-container">
+        <div class="phone-group">
+            <input type="text" name="phone" placeholder="Phone Number" required>
+            <button type="button" class="btn-add" onclick="addPhoneField()">+</button>
+        </div>
+    </div>
 
     <button type="submit">Register</button>
 </form>
+
+<script>
+    function addPhoneField() {
+        const container = document.getElementById('phone-container');
+
+        // Create new div wrapper
+        const div = document.createElement('div');
+        div.className = 'phone-group';
+
+        // Create new input
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'phone';
+        input.placeholder = 'Additional Phone';
+        input.required = true;
+
+        // Create remove button
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-remove';
+        btn.textContent = '-';
+        btn.onclick = function() { container.removeChild(div); };
+
+        // Assemble and append
+        div.appendChild(input);
+        div.appendChild(btn);
+        container.appendChild(div);
+    }
+</script>
+
+</body>
+</html>
