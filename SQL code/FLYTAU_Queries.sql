@@ -32,7 +32,7 @@ SELECT CONCAT(A.manufacturer, ' ', A.size, ' (', FT.class_type, ')') AS label,
 FROM Flight_Tickets FT
 JOIN Orders O ON FT.order_code = O.order_code
 JOIN Airplanes A ON FT.airplane_id = A.airplane_id
-WHERE O.status IN ('Active', 'Executed')
+WHERE O.status IN ('Active', 'Executed', 'Cancelled by customer')
 GROUP BY A.size, A.manufacturer, FT.class_type
 ORDER BY total_revenue DESC;
 
