@@ -157,7 +157,7 @@ def get_order_by_code(order_code, email):
             SELECT o.order_code, o.status, o.order_date, SUM(t.price) as total_price
             FROM Orders o
             JOIN Flight_Tickets t ON o.order_code = t.order_code
-            WHERE o.order_code = %s AND o.email = %s
+            WHERE o.order_code = %s AND o.customer_email = %s
             GROUP BY o.order_code
         """
         cursor.execute(query_order, (order_code, email))
@@ -165,6 +165,7 @@ def get_order_by_code(order_code, email):
 
         if not order_info:
             return None
+
         query_tickets = """
             SELECT t.flight_id, t.row_num, t.column_num, t.class_type, t.price,
                    f.departure_date, f.departure_time, f.source_airport, f.destination_airport

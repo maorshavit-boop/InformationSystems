@@ -377,6 +377,39 @@ def manager_reports():
     return render_template('reports.html', data=data)
 
 
+@app.route('/guest_manage', methods=['GET', 'POST'])
+def guest_manage():
+    """Handles guest access to view and cancel bookings."""
+    if request.method == 'POST':
+        action = request.form.get('action')
+        order_code = request.form.get('order_code')
+        email = request.form.get('email')
+
+        order_data = get_order_by_code(order_code, email)
+
+        if not order_data:
+            flash("Order not found or email does not match.", "danger")
+            return redirect(url_for('guest_manage'))
+
+        #view details
+        if action == 'view':
+            return render_template('guest_order.html', order=order_data, email=email)
+
+        # 3. cancel order, calculate cancellation fee
+        elif action == 'cancel':
+            success, msg = cancel_order_transaction(order_code)
+
+            updated_order = get_order_by_code(order_code, email)
+
+            if success:
+                flash(msg, "success")
+            else:
+                flash(msg, "danger")
+
+            return render_template('guest_order.html', order=updated_order, email=email)
+
+    return render_template('guest_login.html')
+
 if __name__ == '__main__':
     #Running in debug mode for easier development
     app.run(debug=True)

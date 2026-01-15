@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Booking - FLYTAU</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="header-left">
+                <a href="/" class="btn-back">← BACK TO HOME</a>
+            </div>
+            <img src="{{ url_for('static', filename='logo.png') }}" width="100">
+        </div>
+    </header>
+
+    <main class="login-overlay" style="position: relative; background: none; height: auto; padding-top: 50px;">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container" style="max-width: 400px; margin: 0 auto 20px auto;">
+              {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="login-card">
+            <h2 class="login-title">Manage Booking</h2>
+            <p class="login-subtitle">View details or cancel your flight</p>
+
+            <form action="/guest_manage" method="POST" class="login-form">
+                <input type="hidden" name="action" value="view">
+
+                <div class="input-group">
+                    <label>Order Code</label>
+                    <input type="text" name="order_code" placeholder="e.g. A1B2C3D4" required>
+                </div>
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="Used for booking" required>
+                </div>
+                <button type="submit" class="login-btn">Find Booking</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

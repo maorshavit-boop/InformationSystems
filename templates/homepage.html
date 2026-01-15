@@ -8,11 +8,11 @@
 </head>
 <body>
 
-<header>
+<header>d
     <div class="header-container">
-        <nav class="header-left-nav">
+<nav class="header-left-nav">
             <a href="/" class="nav-link-orange">DEPARTURES</a>
-            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('guest_manage') }}" class="nav-link-orange">MANAGE BOOKING</a> {% if current_user.is_authenticated %}
                 {% if current_user.user_type == 'Registered' %}
                     <a href="/mytrips" class="nav-link-orange">MY TRIPS</a>
                 {% endif %}
