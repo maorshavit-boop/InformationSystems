@@ -1,16 +1,85 @@
-<h2>Join FLYTAU</h2>
-<form action="/signup" method="POST">
-    <input type="email" name="email" placeholder="Email (Unique)" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <hr>
-    <input type="text" name="first_name" placeholder="First Name (English)" required>
-    <input type="text" name="middle_name" placeholder="Middle Name (Optional)">
-    <input type="text" name="last_name" placeholder="Last Name (English)" required>
-    <hr>
-    <input type="text" name="passport_num" placeholder="Passport Number" required>
-    <label for="birth_date">Birth Date:</label>
-    <input type="date" name="birth_date" required>
-    <input type="text" name="phone" placeholder="Phone Number" required>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - FLYTAU</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="signup-mode">
 
-    <button type="submit">Register</button>
-</form>
+    <div class="signup-container">
+
+        <div class="signup-header">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" width="80">
+            <h2>Create Account</h2>
+            <p>Join FLYTAU Frequent Flyer Program</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container" style="margin-bottom: 20px;">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form action="/signup" method="POST">
+
+            <div class="form-row three-cols">
+                <div class="input-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" required placeholder="John">
+                </div>
+                <div class="input-group">
+                    <label>Middle</label>
+                    <input type="text" name="middle_name" placeholder="-">
+                </div>
+                <div class="input-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" required placeholder="Doe">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" required placeholder="john@example.com">
+                </div>
+            </div>
+
+            <div class="form-row two-cols">
+                <div class="input-group">
+                    <label>Passport Number</label>
+                    <input type="text" name="passport_num" required>
+                </div>
+                <div class="input-group">
+                    <label>Birth Date</label>
+                    <input type="date" name="birth_date" required>
+                </div>
+            </div>
+
+            <div class="form-row two-cols">
+                <div class="input-group">
+                    <label>Phone Number</label>
+                    <input type="text" name="phone" required placeholder="050-0000000">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required placeholder="******">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-signup">REGISTER NOW</button>
+        </form>
+
+        <div class="back-link-container">
+            <a href="/" class="back-link">← Back to Flight Board</a>
+        </div>
+
+    </div>
+
+</body>
+</html>

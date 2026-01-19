@@ -89,7 +89,7 @@
             <h4>// UPLOAD NEW FLIGHT DATA</h4>
             <form action="/add_flight" method="POST" class="grid-form">
                 <input type="text" name="flight_id" placeholder="FLIGHT ID (FL-XXX)" required>
-                <input type="date" name="departure_date" required>
+                <input type="date" name="departure_date" id="flightDateInput" required>
                 <input type="time" name="departure_time" required>
                 <input type="text" name="source_airport" placeholder="ORIGIN (TLV)" required>
                 <input type="text" name="destination_airport" placeholder="DESTINATION (JFK)" required>
@@ -154,7 +154,7 @@
 
                 <div class="col-action">
                     {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
-                        {% if flight.status == 'Active' %}
+                        {% if flight.status in ['Active', 'Full Capacity'] %}
                         <form action="{{ url_for('cancel_flight', flight_id=flight.flight_id) }}" method="POST" onsubmit="return confirm('Cancel this flight and refund all passengers?');">
                             <button type="submit" class="action-btn btn-danger">ABORT</button>
                         </form>

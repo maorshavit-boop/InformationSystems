@@ -37,9 +37,18 @@
     </style>
 </head>
 <body>
-    <header>
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="150">
-        <nav><a href="/">Back to Flights</a></nav>
+    <header class="header-container">
+        <div class="header-left-nav">
+            <a href="/" class="nav-link-orange"> < BACK TO FLIGHTS </a>
+        </div>
+
+        <div class="header-center">
+            <span class="welcome-text-large" style="font-size: 1.1em; color: var(--neon-yellow);">SEAT SELECTION PHASE</span>
+        </div>
+
+        <div class="header-right-logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="100" class="dimmed-logo">
+        </div>
     </header>
 
     <main>

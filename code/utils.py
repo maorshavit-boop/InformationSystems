@@ -88,34 +88,45 @@ returns fights by users filters
 from datetime import datetime, timedelta
 
 
-def get_customer_history(email):
+def get_customer_history(user_email):
     """
-    Returns all orders for a specific user, including flight details (destination, date)
-    and total price.
+    Fetches order history by summing the 'price' column directly from Flight_Tickets.
+    This relies on the fact that price is saved at the time of booking.
     """
     with db_cur() as cursor:
         query = """
-            SELECT O.order_code, 
-                   O.status, 
-                   O.order_date, 
-                   F.flight_id,
-                   F.source_airport,
-                   F.destination_airport, 
-                   F.departure_date, 
-                   F.departure_time,
-                   SUM(FT.price) as total_price, 
-                   COUNT(FT.row_num) as ticket_count
+            SELECT
+                O.order_code,
+                O.status,
+                O.order_date,
+                F.flight_id,
+                F.departure_date,
+                F.departure_time,
+                F.source_airport,
+                F.destination_airport,
+                -- Simple SUM of the recorded price in tickets
+                SUM(FT.price) as total_payment
             FROM Orders O
-            JOIN Flight_Tickets FT ON O.order_code = FT.order_code
-            JOIN Flights F ON FT.flight_id = F.flight_id
-            WHERE O.customer_email = %s  -- FIXED: changed from O.email to O.customer_email
-            GROUP BY O.order_code, O.status, O.order_date, F.flight_id, 
-                     F.source_airport, F.destination_airport, F.departure_date, F.departure_time
+            JOIN Flight_Tickets FT 
+                ON O.order_code = FT.order_code
+            JOIN Flights F 
+                ON FT.flight_id = F.flight_id 
+                AND FT.departure_date = F.departure_date
+            WHERE O.customer_email = %s
+            GROUP BY 
+                O.order_code, 
+                F.flight_id, 
+                F.departure_date, 
+                F.departure_time, 
+                F.source_airport, 
+                F.destination_airport, 
+                O.status, 
+                O.order_date
             ORDER BY O.order_date DESC
         """
-        cursor.execute(query, (email,))
-        return cursor.fetchall()
-
+        cursor.execute(query, (user_email,))
+        orders = cursor.fetchall()
+        return orders
 
 
 def get_order_by_code(order_code, email):
@@ -304,14 +315,16 @@ def get_current_price(flight_id, class_type):
 #Creates a booking
 def create_booking(flight_id, selected_seats, user, guest_data=None):
     """
-    Updated to support the new schema:
-    1. Fetches price from Classes_In_Flights.
-    2. Uses departure_date as part of the primary key for Flight_Tickets.
-    3. Does NOT save price in Flight_Tickets (as per your schema).
+    Creates a booking transaction:
+    1. Fetches the flight date (needed for keys).
+    2. Generates an order code.
+    3. Registers the user if they are a guest.
+    4. Creates the Order record.
+    5. For each seat: Fetches the SPECIFIC PRICE from Classes_In_Flights and saves it to the ticket.
     """
     with db_cur() as cursor:
         try:
-            # 1. Fetch Flight Departure Date (Required for keys)
+            # 1. Fetch Flight Departure Date (Required for composite keys)
             cursor.execute("SELECT departure_date FROM Flights WHERE flight_id = %s", (flight_id,))
             res = cursor.fetchone()
             if not res:
@@ -321,13 +334,14 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
             # 2. Generate Order Code
             order_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
-            # 3. Handle Customer
+            # 3. Handle Customer (Registered vs Guest)
             if user.is_authenticated:
                 email = user.id
                 customer_type = 'Registered'
             else:
                 email = guest_data['email']
                 customer_type = 'Unregistered'
+                # Check if guest exists
                 cursor.execute("SELECT email FROM Unregistered_Customers WHERE email = %s", (email,))
                 if not cursor.fetchone():
                     cursor.execute("""
@@ -335,7 +349,7 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
                         VALUES (%s, %s, %s, %s, 'Unregistered')
                     """, (email, guest_data['first_name'], guest_data.get('middle_name'), guest_data['last_name']))
 
-            # 4. Create Order
+            # 4. Create Order Record
             cursor.execute("""
                 INSERT INTO Orders (order_code, customer_email, status, order_date, customer_type)
                 VALUES (%s, %s, 'Active', CURDATE(), %s)
@@ -343,32 +357,34 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
 
             # 5. Process Tickets
             for seat_key in selected_seats:
-                # Format: "row-col-class-airplane_id"
+                # Parse seat key format: "row-col-class-airplane_id"
                 parts = seat_key.split('-')
                 row = parts[0]
                 col = parts[1]
                 s_class = parts[2]
-                airplane_id = "-".join(parts[3:])
+                airplane_id = "-".join(parts[3:])  # Re-join in case airplane_id has dashes
 
-                # Verify Price exists (Validation step)
-                # Note: Price is not saved in Ticket anymore, but we check if class exists for this flight
+                # --- STEP A: Fetch the correct price for this flight class ---
                 cursor.execute("""
                     SELECT price FROM Classes_In_Flights 
                     WHERE flight_id = %s AND departure_date = %s AND class_type = %s AND airplane_id = %s
                 """, (flight_id, departure_date, s_class, airplane_id))
 
-                price_check = cursor.fetchone()
-                if not price_check:
-                    return False, f"Pricing not found for class {s_class}", None
+                price_res = cursor.fetchone()
+                if not price_res:
+                    return False, f"Pricing configuration missing for class {s_class}", None
 
-                # Insert Ticket (Note: Price column removed, Date added)
+                current_price = price_res['price']
+
+                # --- STEP B: Insert Ticket with the fetched price ---
                 cursor.execute("""
                     INSERT INTO Flight_Tickets 
                     (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id, price_check['price']))
+                """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id, current_price))
 
             return True, "Booking successful!", order_code
+
         except Exception as e:
             print(f"Booking Error: {e}")
             return False, str(e), None

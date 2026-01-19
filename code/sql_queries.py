@@ -1,5 +1,5 @@
 q1 = """
-SELECT AVG((occupied_seats * 100)/ total_seats)  AS avg_capacity_percentage
+SELECT AVG((occupied_seats * 100.0)/ total_seats)  AS avg_capacity_percentage
 FROM (
 SELECT F.flight_id, F.departure_date,
         -- Count tickets sold for this flight (Comparing both ID and Date)

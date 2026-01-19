@@ -363,3 +363,212 @@ footer {
     cursor: pointer;
     font-size: 16px;
 }
+
+/* =========================================
+   9. SIGNUP PAGE STYLES (NEW)
+   ========================================= */
+
+/* מחלקה מיוחדת ל-BODY של דף ההרשמה כדי למרכז את הטופס */
+body.signup-mode {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-image: radial-gradient(circle at 50% 0%, #2a2a2a 0%, #000 100%);
+}
+
+.signup-container {
+    background-color: #1e1e1e;
+    width: 100%;
+    max-width: 650px; /* קצת יותר רחב לטובת הגריד */
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    border: 1px solid #333;
+    position: relative;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.signup-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 20px;
+}
+
+.signup-header h2 {
+    color: white;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2em;
+    margin: 10px 0 5px;
+    letter-spacing: 2px;
+}
+
+.signup-header p {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    margin: 0;
+}
+
+/* סידור השדות בגריד */
+.form-row {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.two-cols { grid-template-columns: 1fr 1fr; }
+.three-cols { grid-template-columns: 1fr 1fr 1fr; }
+
+/* שימוש במחלקות קיימות עם התאמות קטנות */
+.signup-container .input-group {
+    margin-bottom: 0; /* הגריד מטפל ברווחים */
+}
+
+.signup-container label {
+    color: var(--accent-blue);
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.signup-container input {
+    background: #111;
+    border: 1px solid #444;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+.signup-container input:focus {
+    border-color: var(--accent-blue);
+    background: #000;
+    box-shadow: 0 0 10px rgba(41, 98, 255, 0.2);
+    outline: none;
+}
+
+/* כפתור הרשמה ייעודי */
+.btn-signup {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent-blue), #00d4ff);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-signup:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+}
+
+/* לינק חזרה */
+.back-link-container {
+    text-align: center;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px dashed #333;
+}
+
+.back-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: color 0.3s;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.back-link:hover {
+    color: var(--neon-yellow);
+}
+
+/* =========================================
+   11. MY TRIPS PAGE STYLES
+   ========================================= */
+
+.trips-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.trips-header-title {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--neon-orange); /* שימוש בצבע החדש שלך */
+    font-size: 2em;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+/* טבלה מודרנית ללא גבולות רגילים */
+.styled-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 15px; /* רווח בין השורות */
+}
+
+.styled-table thead th {
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 0.85em;
+    text-transform: uppercase;
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+}
+
+.trip-row {
+    background-color: var(--board-bg);
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.trip-row td {
+    padding: 20px;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+}
+
+/* עיגול פינות לשורה כולה */
+.trip-row td:first-child { border-left: 1px solid #333; border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+.trip-row td:last-child { border-right: 1px solid #333; border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+.trip-row:hover {
+    transform: scale(1.01); /* אפקט גדילה עדין */
+    background-color: #252a33;
+    border-color: var(--accent-blue);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* עיצוב נתונים ספציפיים */
+.order-id { font-family: 'Share Tech Mono', monospace; color: var(--accent-blue); font-size: 1.1em; }
+.route-badge { font-weight: bold; color: white; background: #111; padding: 5px 10px; border-radius: 4px; border: 1px solid #444; }
+.price-tag { color: var(--neon-green); font-weight: bold; font-family: 'Share Tech Mono', monospace; }
+
+/* תגיות סטטוס */
+.status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
+.status-active { background: rgba(0, 255, 65, 0.1); color: var(--neon-green); border: 1px solid var(--neon-green); }
+.status-cancelled { background: rgba(255, 51, 51, 0.1); color: var(--neon-red); border: 1px solid var(--neon-red); }
+.status-executed { background: rgba(41, 98, 255, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
+
+.btn-cancel-sm {
+    background: transparent;
+    color: var(--neon-red);
+    border: 1px solid var(--neon-red);
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-family: 'Share Tech Mono', monospace;
+}
+.btn-cancel-sm:hover { background: var(--neon-red); color: white; }

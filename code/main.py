@@ -29,6 +29,14 @@ def load_user(user_id):
 
 @app.route('/')
 def homepage():
+    # Automatic update - flights that there times passed becomes arrived
+    with db_cur() as cursor:
+        cursor.execute("""
+                UPDATE Flights 
+                SET status = 'Arrived' 
+                WHERE status = 'Active' 
+                AND TIMESTAMP(departure_date, departure_time) < NOW()
+            """)
     # [cite_start]Detect user type for flight visibility [cite: 46]
     u_type = current_user.user_type if current_user.is_authenticated else 'Guest'
 
@@ -68,7 +76,6 @@ def login():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    """Handles the signup process."""
     """Handles the signup process."""
     if request.method == 'POST':
         # Collect all form fields into a dictionary
@@ -261,8 +268,47 @@ def add_flight():
     dest = request.form.get('destination_airport')
     runway = request.form.get('runway_num')
 
+    try:
+        # Unite the departure date and time to one object
+        flight_datetime_str = f"{f_date} {f_time}"
+        flight_dt = datetime.strptime(flight_datetime_str, '%Y-%m-%d %H:%M')
+
+        # Check if the date has been passed
+        if flight_dt < datetime.now():
+            flash("Error: You cannot add a flight in the past!", "danger")
+            return redirect(url_for('homepage'))
+
+    except ValueError:
+        flash("Invalid date or time format.", "danger")
+        return redirect(url_for('homepage'))
+
     with db_cur() as cursor:
         try:
+            # Validation - checks runaways conflicts - Is there a flight on the same date and one hour difference that runs on the same runaway
+
+            conflict_query = """
+                            SELECT flight_id, departure_time 
+                            FROM Flights 
+                            WHERE departure_date = %s 
+                              AND runway_num = %s 
+                              AND departure_time BETWEEN SUBTIME(%s, '01:00:00') AND ADDTIME(%s, '01:00:00')
+                        """
+            cursor.execute(conflict_query, (f_date, runway, f_time, f_time))
+            conflicts = cursor.fetchall()
+
+            if conflicts:
+                # if there are results we have conflicts
+                flash(
+                    f"Error: Runway {runway} is busy within 1 hour of {f_time}. Conflicting flight(s): {[c['flight_id'] for c in conflicts]}",
+                    "danger")
+                return redirect(url_for('homepage'))
+
+            # Validation - Is the plane exists?
+            cursor.execute("SELECT airplane_id FROM Airplanes WHERE airplane_id = %s", (plane_id,))
+            if not cursor.fetchone():
+                flash(f"Error: Airplane {plane_id} does not exist.", "danger")
+                return redirect(url_for('homepage'))
+
             # הוספת הטיסה לפי הסכימה: flight_id, departure_date, airplane_id, source, destination, status, time, runway
             sql = """
                 INSERT INTO Flights (flight_id, departure_date, airplane_id, source_airport, destination_airport, status, departure_time, runway_num)

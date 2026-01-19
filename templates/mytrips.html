@@ -2,99 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Trips - FLYTAU</title>
+    <title>My Flight History - FLYTAU</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        .history-container { max-width: 1000px; margin: 50px auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #0056b3; color: white; }
-        
-        /* Status Colors */
-        .status-active { color: #28a745; font-weight: bold; }
-        .status-cancelled { color: #dc3545; font-weight: bold; }
-        .status-executed { color: #6c757d; font-weight: bold; }
-
-        .btn-cancel {
-            background-color: #dc3545; color: white; border: none; 
-            padding: 8px 12px; border-radius: 4px; cursor: pointer;
-        }
-        .btn-cancel:hover { background-color: #c82333; }
-    </style>
 </head>
 <body>
-    <header>
-        <img src="{{ url_for('static', filename='logo.png') }}" width="100">
-        <nav>
-            <a href="/">Home</a> | <a href="/mytrips">My Trips</a>
-        </nav>
-        <div class="auth-box">
-             Hello, {{ current_user.first_name }} | <a href="/logout">Logout</a>
+
+    <header class="header-container">
+        <div class="header-left-nav">
+            <a href="/" class="nav-link-orange"> < FLIGHT BOARD </a>
+            <span style="color: #444;"> // </span>
+            <a href="/mytrips" class="nav-link-orange" style="color: var(--accent-blue); border-left: 2px solid var(--accent-blue); padding-left: 10px;"> MY HISTORY </a>
+        </div>
+
+        <div class="header-center">
+            <span class="welcome-text-large">PILOT LOG: <span class="user-name">{{ current_user.first_name }}</span></span>
+        </div>
+
+        <div class="header-right-logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="100" class="dimmed-logo">
         </div>
     </header>
 
-    <main class="history-container">
-        <h2>My Flight History</h2>
+    <main class="trips-container">
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 15px; background: #f8f9fa; border-left: 5px solid #333;">
+                    <div class="flash-message {{ category }}" style="display:block; text-align:center; margin-bottom:20px;">
                         {{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        {% if orders %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Order #</th>
-                        <th>Flight</th>
-                        <th>Route</th>
-                        <th>Date & Time</th>
-                        <th>Total Paid</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>{{ order.order_code }}</td>
-                        <td>{{ order.flight_id }}</td>
-                        <td>{{ order.source_airport }} ➝ {{ order.destination_airport }}</td>
-                        <td>{{ order.departure_date }} <br> <small>{{ order.departure_time }}</small></td>
-                        <td>${{ order.total_price }}</td>
-                        
-                        <td>
-                            <span class="
-                                {% if 'Cancelled' in order.status %} status-cancelled
-                                {% elif order.status == 'Active' %} status-active
-                                {% else %} status-executed {% endif %}
-                            ">
-                                {{ order.status }}
-                            </span>
-                        </td>
+        <h2 class="trips-header-title">FLIGHT MANIFEST / ORDER HISTORY</h2>
 
-                        <td>
-                            {% if order.status == 'Active' %}
-                                <form action="{{ url_for('cancel_order', order_code=order.order_code) }}" method="POST" onsubmit="return confirm('Cancel this booking? A 5% fee applies.');">
-                                    <button type="submit" class="btn-cancel">Cancel</button>
-                                </form>
-                            {% else %}
-                                <span style="color: #999;">-</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        {% if orders %}
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Order Ref</th>
+                    <th>Route</th>
+                    <th>Date & Time</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr class="trip-row">
+                    <td><span class="order-id">{{ order.order_code }}</span></td>
+
+                    <td>
+                        <span class="route-badge">
+                            {{ order.source_airport }} ➝ {{ order.destination_airport }}
+                        </span>
+                        <div style="font-size: 0.8em; color: #777; margin-top: 5px;">Flight {{ order.flight_id }}</div>
+                    </td>
+
+                    <td style="color: #e0e0e0;">
+                        {{ order.departure_date }}
+                        <br>
+                        <span style="color: var(--neon-yellow); font-family: monospace;">{{ order.departure_time }}</span>
+                    </td>
+
+                    <td><span class="price-tag">${{ order.total_payment }}</span></td>
+
+                    <td>
+                        {% set status_class = 'status-active' %}
+                        {% if 'Cancel' in order.status %}
+                            {% set status_class = 'status-cancelled' %}
+                        {% elif order.status == 'Executed' or order.status == 'Arrived' %}
+                            {% set status_class = 'status-executed' %}
+                        {% endif %}
+
+                        <span class="status-badge {{ status_class }}">{{ order.status }}</span>
+                    </td>
+
+                    <td>
+                        {% if order.status == 'Active' %}
+                            <form action="{{ url_for('cancel_order', order_code=order.order_code) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this trip?');">
+                                <button type="submit" class="btn-cancel-sm">CANCEL</button>
+                            </form>
+                        {% else %}
+                            <span style="color: #555; font-size: 0.8em;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% else %}
-            <p>You have no flight history yet.</p>
-            <a href="/"><button>Book a Flight</button></a>
+            <div style="text-align: center; padding: 50px; background: #1a1d24; border-radius: 10px; border: 1px dashed #444;">
+                <h3 style="color: #888;">NO FLIGHT RECORDS FOUND</h3>
+                <a href="/" class="search-btn" style="text-decoration: none; display: inline-block; margin-top: 20px;">BOOK A FLIGHT</a>
+            </div>
         {% endif %}
+
     </main>
+
 </body>
 </html>
