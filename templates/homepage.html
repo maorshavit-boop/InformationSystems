@@ -156,9 +156,9 @@
 
                 <div class="col-action">
                     {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
-                        {% if flight.status == 'Active' %}
+                    {% if flight.status in ['Active', 'Full Capacity'] %}
                         <form action="{{ url_for('cancel_flight', flight_id=flight.flight_id) }}" method="POST" onsubmit="return confirm('Cancel this flight and refund all passengers?');">
-                            <button type="submit" class="action-btn btn-danger">ABORT</button>
+                          <button type="submit" class="action-btn btn-danger">ABORT</button>
                         </form>
                         {% else %}
                             <span class="locked-icon">🔒</span>

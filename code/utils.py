@@ -120,7 +120,7 @@ def get_customer_history(email, status_filter=None):
                    F.destination_airport, 
                    F.departure_date, 
                    F.departure_time,
-                   SUM(FT.price) as total_price, 
+                   COALESCE(SUM(FT.price),0) as total_price, 
                    COUNT(FT.row_num) as ticket_count
             FROM Orders O
             JOIN Flight_Tickets FT ON O.order_code = FT.order_code
@@ -401,13 +401,14 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
                 price_check = cursor.fetchone()
                 if not price_check:
                     return False, f"Pricing not found for class {s_class}", None
+                current_price = price_check['price']
 
                 # Insert Ticket
                 cursor.execute("""
                     INSERT INTO Flight_Tickets 
                     (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id, price_check['price']))
+                """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id, current_price))
 
             return True, "Booking successful!", order_code
         except Exception as e:

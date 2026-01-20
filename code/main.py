@@ -29,6 +29,13 @@ def load_user(user_id):
 
 @app.route('/')
 def homepage():
+    with db_cur() as cursor:
+        cursor.execute("""
+                UPDATE Flights 
+                SET status = 'Arrived' 
+                WHERE status = 'Active' 
+                AND TIMESTAMP(departure_date, departure_time) < NOW()
+            """)
     # [cite_start]Detect user type for flight visibility [cite: 46]
     u_type = current_user.user_type if current_user.is_authenticated else 'Guest'
 
@@ -289,14 +296,14 @@ def add_flight():
 
     step = request.form.get('step', '1')
 
-    # --- STEP 1: ROUTE ---
+    # --- STEP 1: ROUTE SELECTION ---
     if step == '1':
         with db_cur() as cursor:
             cursor.execute("SELECT source_airport, destination_airport, flight_duration FROM Flight_Routes")
             routes = cursor.fetchall()
         return render_template('add_flight.html', step=1, routes=routes)
 
-    # --- STEP 2: LOGISTICS ---
+    # --- STEP 2: LOGISTICS INPUT ---
     elif step == '2':
         route_key = request.form.get('route_key')
         if not route_key:
@@ -312,8 +319,9 @@ def add_flight():
 
         return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration)
 
-    # --- STEP 3: RESOURCES ---
+    # --- STEP 3: VALIDATION & RESOURCES ---
     elif step == '3':
+        # 1. Collect Data from Step 2
         f_id = request.form.get('flight_id')
         date = request.form.get('departure_date')
         time = request.form.get('departure_time')
@@ -322,20 +330,51 @@ def add_flight():
         dest = request.form.get('dest')
         duration = int(request.form.get('duration'))
 
-        # A. VALIDATE FLIGHT ID (Uniqueness)
+        # --- A. DATE VALIDATION (New) ---
+        try:
+            # Unite date and time
+            flight_datetime_str = f"{date} {time}"
+            flight_dt = datetime.strptime(flight_datetime_str, '%Y-%m-%d %H:%M')
+
+            # Check if date is in the past
+            if flight_dt < datetime.now():
+                flash("Error: You cannot add a flight in the past!", "danger")
+                # Return to Step 2 so user doesn't lose data
+                return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
+                                       prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
+        except ValueError:
+            flash("Invalid date or time format.", "danger")
+            return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
+                                   prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
+
+        # --- B. FLIGHT ID VALIDATION (Uniqueness) ---
         if check_flight_id_exists(f_id):
             flash(f"Error: Flight ID '{f_id}' is already in use.", "danger")
             return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
                                    prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
 
-        # B. VALIDATE RUNWAY (Availability)
-        conflict_msg = check_runway_conflict(date, time, runway)
-        if conflict_msg:
-            flash(conflict_msg, "danger")
-            return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
-                                   prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
+        # --- C. RUNWAY CONFLICT VALIDATION (New) ---
+        with db_cur() as cursor:
+            conflict_query = """
+                SELECT flight_id, departure_time 
+                FROM Flights 
+                WHERE departure_date = %s 
+                  AND runway_num = %s 
+                  AND departure_time BETWEEN SUBTIME(%s, '01:00:00') AND ADDTIME(%s, '01:00:00')
+            """
+            cursor.execute(conflict_query, (date, runway, time, time))
+            conflicts = cursor.fetchall()
 
-        # C. GET RESOURCES
+            if conflicts:
+                flash(
+                    f"Error: Runway {runway} is busy within 1 hour of {time}. Conflicting flight(s): {[c['flight_id'] for c in conflicts]}",
+                    "danger")
+                return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
+                                       prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
+
+        # --- D. GET RESOURCES (Planes, Pilots, Attendants) ---
+        # Note: We don't check if "plane exists" here because the user hasn't selected a plane yet.
+        # This function returns the LIST of available planes for the next step.
         planes, pilots, attendants = get_available_resources(date, time, duration)
 
         is_long_haul = duration > 360
@@ -343,7 +382,7 @@ def add_flight():
         req_attendants = 6 if is_long_haul else 3
 
         if not planes:
-            flash("No aircraft available for this time slot.", "danger")
+            flash("No aircraft available for this time slot (all planes are busy or maintenance).", "danger")
             return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
                                    prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
 
@@ -352,15 +391,19 @@ def add_flight():
             return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
                                    prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
 
+        # If all validations pass, move to Step 3 (Selection)
         return render_template('add_flight.html', step=3,
                                flight_id=f_id, departure_date=date, departure_time=time, runway_num=runway,
                                source=source, dest=dest, duration=duration,
                                planes=planes, pilots=pilots, attendants=attendants,
                                is_long_haul=is_long_haul)
 
-    # --- FINISH: COMMIT ---
+    # --- FINISH: COMMIT TO DB ---
     elif step == 'finish':
+        # This function handles the final INSERT into Flights and mapping tables
+        # It assumes the plane_id sent here is valid because it came from the list generated in step 3
         success, msg = create_flight_final_step(request.form)
+
         if success:
             flash(msg, "success")
             return redirect(url_for('homepage'))
@@ -370,6 +413,7 @@ def add_flight():
             return redirect(url_for('add_flight'))
 
     return redirect(url_for('homepage'))
+
 @app.route('/add_route', methods=['POST'])
 @login_required
 def add_route():

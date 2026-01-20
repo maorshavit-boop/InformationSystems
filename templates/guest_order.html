@@ -5,17 +5,20 @@
     <title>Order Details - FLYTAU</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="order-details-page">
+
     <header>
         <div class="header-container">
             <div class="header-left">
                 <a href="{{ url_for('guest_manage') }}" class="btn-back">← BACK</a>
             </div>
-            <img src="{{ url_for('static', filename='logo.png') }}" width="100">
+            <div class="logo-box">
+                <img src="{{ url_for('static', filename='logo.png') }}" width="80" alt="FlyTau">
+            </div>
         </div>
     </header>
 
-    <main class="main-content" style="padding-top: 20px;">
+    <main class="main-content container-width">
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
@@ -28,57 +31,45 @@
         {% endwith %}
 
         <div class="trips-container">
-            <div class="trip-card">
-                <div class="trip-header">
-                    <span class="trip-code">#{{ order.info.order_code }}</span>
-                    <span class="trip-date">Ordered on: {{ order.info.order_date }}</span>
-                </div>
 
-                <div style="text-align: center; margin: 15px 0;">
-                    <span class="status-badge status-{{ order.info.status.split(' ')[0]|lower }}" style="font-size: 1.2em; padding: 8px 15px;">
-                        {{ order.info.status|upper }}
-                    </span>
-                </div>
-
-                <h3 style="margin-left: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Tickets in this order:</h3>
-                {% for ticket in order.tickets %}
-                <div class="trip-details" style="border-bottom: 1px dashed #ccc; margin-bottom: 10px;">
-                    <div class="detail-item">
-                        <span class="label">FLIGHT</span>
-                        <span class="value">{{ ticket.flight_id }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="label">ROUTE</span>
-                        <span class="value">{{ ticket.source_airport }} ➝ {{ ticket.destination_airport }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="label">DEPARTURE</span>
-                        <span class="value">{{ ticket.departure_date }} {{ ticket.departure_time }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="label">SEAT</span>
-                        <span class="value">{{ ticket.row_num }}{{ ticket.column_num|map_to_letter }} ({{ ticket.class_type }})</span>
-                    </div>
-                </div>
-                {% endfor %}
-
-                <div class="trip-footer" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <div class="total-price" style="font-size: 1.5em; font-weight: bold; color: #333;">
-                        Total Paid: ${{ order.info.total_price }}
-                    </div>
-
-                    {% if order.info.status == 'Active' %}
-                    <form action="/guest_manage" method="POST" onsubmit="return confirm('WARNING: Cancelling will refund only 95% of the total price. This cannot be undone. Continue?');">
-                        <input type="hidden" name="action" value="cancel">
-                        <input type="hidden" name="order_code" value="{{ order.info.order_code }}">
-                        <input type="hidden" name="email" value="{{ email }}">
-                        <button type="submit" class="btn-cancel-trip" style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                            CANCEL ENTIRE BOOKING
-                        </button>
-                    </form>
-                    {% endif %}
-                </div>
+            <div class="trip-header-info">
+                #{{ order.info.order_code }} Ordered on: {{ order.info.order_date }}
             </div>
+
+            <div class="status-container">
+                <span class="status-badge">
+                    {{ order.info.status }}
+                </span>
+            </div>
+
+            <div class="tickets-title">Tickets in this order:</div>
+
+            {% for ticket in order.tickets %}
+            <div class="trip-details">
+                <span class="detail-line">FLIGHT {{ ticket.flight_id }}</span>
+                <span class="detail-line">ROUTE {{ ticket.source_airport }} &#8594; {{ ticket.destination_airport }}</span>
+                <span class="detail-line">DEPARTURE {{ ticket.departure_date }} {{ ticket.departure_time }}</span>
+                <span class="detail-line">SEAT {{ ticket.row_num }}{{ ticket.column_num|map_to_letter }} ({{ ticket.class_type }})</span>
+            </div>
+            {% endfor %}
+
+            <div class="trip-footer">
+                <div class="total-price">
+                    Total Paid: ${{ order.info.total_price }}
+                </div>
+
+                {% if order.info.status|lower == 'active' %}
+                <form action="/guest_manage" method="POST" onsubmit="return confirm('WARNING: Cancelling will refund only 95% of the total price. This cannot be undone. Continue?');">
+                    <input type="hidden" name="action" value="cancel">
+                    <input type="hidden" name="order_code" value="{{ order.info.order_code }}">
+                    <input type="hidden" name="email" value="{{ email }}">
+                    <button type="submit" class="btn-cancel-trip">
+                        CANCEL ENTIRE BOOKING
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
         </div>
     </main>
 </body>

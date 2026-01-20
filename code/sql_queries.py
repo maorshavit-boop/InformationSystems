@@ -1,5 +1,5 @@
 q1 = """
-SELECT AVG((occupied_seats * 100)/ total_seats)  AS avg_capacity_percentage
+SELECT AVG((occupied_seats * 100.0)/ total_seats)  AS avg_capacity_percentage
 FROM (
 SELECT F.flight_id, F.departure_date,
         -- Count tickets sold for this flight (Comparing both ID and Date)
@@ -80,7 +80,7 @@ SELECT
     Stats.flights_executed,
     Stats.flights_cancelled,
     -- Utilization: Days flown / 30 days
-    ROUND((Stats.days_flown / 30) * 100, 2) AS utilization_percentage,
+    ROUND((Stats.days_flown / 30) * 100.0, 2) AS utilization_percentage,
 
     -- Subquery to find the dominant route (most frequent)
     (SELECT CONCAT(source_airport, '-', destination_airport)
