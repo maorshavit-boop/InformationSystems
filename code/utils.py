@@ -17,6 +17,23 @@ db_config = {
 # Context manager to handle database connection and cursor lifecycle.
 @contextmanager
 def db_cur():
+    """
+        Context manager that establishes a database connection and yields a
+        dictionary cursor for executing SQL queries, ensuring resources are closed automatically.
+
+        Args:
+            None
+
+        Logic:
+            1. Connects to the database using mysql.connector and the global configuration.
+            2. Creates a cursor with dictionary=True so query results are returned as dictionaries.
+            3. Yields the cursor to the caller for use in a with statement.
+            4. Catches, prints, and re-raises any database errors that occur.
+            5. Finally, ensures the cursor and connection are closed, regardless of success or failure.
+
+        Returns:
+            MySQLCursorDict: A cursor object that returns query results as dictionaries.
+     """
     mydb = None
     cursor = None
     try:

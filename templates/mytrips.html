@@ -87,7 +87,7 @@
 
                     <td>
                         {% if 'Cancel' in order.status %}
-                            <span class="price-tag" style="text-decoration: line-through; color: #777;">
+                            <span class="price-tag" style="text-decoration: line-through; color: var(--neon-red);">
                                 ${{ order.total_price }}
                             </span>
                         {% else %}
