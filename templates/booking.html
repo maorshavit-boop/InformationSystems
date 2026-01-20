@@ -34,21 +34,47 @@
         .seat.business { background-color: #1a237e; color: white; border: 1px solid #000; }
         .seat.economy { background-color: #2196f3; color: white; border: 1px solid #1976d2; }
         .seat.taken { background-color: #bdbdbd !important; cursor: not-allowed; border: 1px solid #999; }
+
+        /* --- הוספנו עיצוב לטופס האורחים --- */
+        .guest-form {
+            max-width: 600px;
+            margin: 30px auto; /* קצת רווח מלמעלה */
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .guest-form h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: left;
+        }
+        .guest-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .guest-form input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* חשוב כדי שה-padding לא יחרוג */
+        }
     </style>
 </head>
 <body>
-    <header class="header-container">
-        <div class="header-left-nav">
-            <a href="/" class="nav-link-orange"> < BACK TO FLIGHTS </a>
-        </div>
-
-        <div class="header-center">
-            <span class="welcome-text-large" style="font-size: 1.1em; color: var(--neon-yellow);">SEAT SELECTION PHASE</span>
-        </div>
-
-        <div class="header-right-logo">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="100" class="dimmed-logo">
-        </div>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="150">
+        <nav><a href="/">Back to Flights</a></nav>
     </header>
 
     <main>
@@ -113,6 +139,31 @@
                     {% endfor %}
                 </div>
 
+                {% if not current_user.is_authenticated %}
+                <div class="guest-form">
+                    <h3>Guest Details</h3>
+                    <div class="form-row">
+                        <div>
+                            <label>First Name</label>
+                            <input type="text" name="guest_first" required>
+                        </div>
+                        <div>
+                            <label>Last Name</label>
+                            <input type="text" name="guest_last" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label>Phone Number</label>
+                            <input type="text" name="guest_phone" required>
+                        </div>
+                        <div>
+                            <label>Email Address</label>
+                            <input type="email" name="guest_email" placeholder="name@example.com" required>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 <div style="text-align: center; margin-top: 30px;">
                     <button type="submit" class="confirm-btn">Confirm Selection</button>
                 </div>

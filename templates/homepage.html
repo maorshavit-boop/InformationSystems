@@ -12,6 +12,7 @@
     <div class="header-container">
         <nav class="header-left-nav">
             <a href="/" class="nav-link-orange">DEPARTURES</a>
+            <a href="{{ url_for('guest_manage') }}" class="nav-link-orange">MANAGE BOOKING</a>
             {% if current_user.is_authenticated %}
                 {% if current_user.user_type == 'Registered' %}
                     <a href="/mytrips" class="nav-link-orange">MY TRIPS</a>
@@ -79,23 +80,24 @@
             <h2>COMMAND CENTER</h2>
             <div class="manager-actions">
                 <a href="{{ url_for('manager_reports') }}" class="btn-report">📊 SYSTEM REPORTS</a>
-                <button onclick="document.getElementById('add-flight-div').toggleDisplay()" class="btn-create">
-                    + NEW FLIGHT PLAN
+
+                <button onclick="document.getElementById('update-price-div').toggleDisplay()" class="btn-create" style="background-color: #ff9e22; color: #000;">
+                    $ SET PRICES
                 </button>
+
+                <a href="{{ url_for('add_flight') }}" class="btn-create" style="text-decoration: none; display: inline-block; text-align: center;">
+                    + NEW FLIGHT PLAN
+                </a>
             </div>
         </div>
 
-        <div id="add-flight-div" class="add-flight-form" style="display: none;">
-            <h4>// UPLOAD NEW FLIGHT DATA</h4>
-            <form action="/add_flight" method="POST" class="grid-form">
-                <input type="text" name="flight_id" placeholder="FLIGHT ID (FL-XXX)" required>
-                <input type="date" name="departure_date" id="flightDateInput" required>
-                <input type="time" name="departure_time" required>
-                <input type="text" name="source_airport" placeholder="ORIGIN (TLV)" required>
-                <input type="text" name="destination_airport" placeholder="DESTINATION (JFK)" required>
-                <input type="text" name="airplane_id" placeholder="AIRCRAFT ID" required>
-                <input type="text" name="runway_num" placeholder="RUNWAY" required>
-                <button type="submit" class="btn-save">EXECUTE UPLOAD</button>
+        <div id="update-price-div" class="add-flight-form" style="display: none; margin-bottom: 20px; border-color: #ff9e22;">
+            <h4 style="color: #ff9e22;">// UPDATE FLIGHT TICKET PRICES</h4>
+            <form action="/manager/set_price" method="POST" class="grid-form">
+                <input type="text" name="flight_id" placeholder="FLIGHT ID (e.g. FL-101)" required>
+                <input type="number" step="0.01" name="economy_price" placeholder="Economy Price ($)" required>
+                <input type="number" step="0.01" name="business_price" placeholder="Business Price ($)" required>
+                <button type="submit" class="btn-save" style="background-color: #ff9e22; color: black; font-weight: bold;">UPDATE PRICES</button>
             </form>
         </div>
     </section>
@@ -154,7 +156,7 @@
 
                 <div class="col-action">
                     {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
-                        {% if flight.status in ['Active', 'Full Capacity'] %}
+                        {% if flight.status == 'Active' %}
                         <form action="{{ url_for('cancel_flight', flight_id=flight.flight_id) }}" method="POST" onsubmit="return confirm('Cancel this flight and refund all passengers?');">
                             <button type="submit" class="action-btn btn-danger">ABORT</button>
                         </form>

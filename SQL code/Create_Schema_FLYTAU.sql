@@ -92,7 +92,7 @@ CREATE TABLE Flights (
     destination_airport VARCHAR(50),
     status ENUM('Active','Full Capacity','Arrived', 'Cancelled'),
     departure_time TIME,
-    runway_num ENUM('R1','R2', 'R3', 'R4', 'R5'),
+    runway_num VARCHAR(10),
     PRIMARY KEY (flight_id, departure_date),
     FOREIGN KEY (airplane_id) REFERENCES Airplanes(airplane_id),
     FOREIGN KEY (source_airport, destination_airport) REFERENCES Flight_Routes(source_airport, destination_airport)

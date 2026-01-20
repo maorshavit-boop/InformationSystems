@@ -2,105 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Flight History - FLYTAU</title>
+    <title>My Trips - FLYTAU</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-    <header class="header-container">
-        <div class="header-left-nav">
-            <a href="/" class="nav-link-orange"> < FLIGHT BOARD </a>
-            <span style="color: #444;"> // </span>
-            <a href="/mytrips" class="nav-link-orange" style="color: var(--accent-blue); border-left: 2px solid var(--accent-blue); padding-left: 10px;"> MY HISTORY </a>
-        </div>
-
-        <div class="header-center">
-            <span class="welcome-text-large">PILOT LOG: <span class="user-name">{{ current_user.first_name }}</span></span>
-        </div>
-
-        <div class="header-right-logo">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="100" class="dimmed-logo">
+    <header>
+        <div class="header-container">
+            <div class="header-left">
+                <a href="/" class="btn-back">← BACK TO DEPARTURES</a>
+            </div>
+            <div class="header-right-logo">
+                 <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" class="logo dimmed-logo" width="100">
+            </div>
         </div>
     </header>
 
-    <main class="trips-container">
+    <div class="main-content" style="padding-top: 20px;">
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}" style="display:block; text-align:center; margin-bottom:20px;">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <div class="filter-container">
+            <span class="filter-label">FILTER STATUS:</span>
+            <div class="filter-options">
+                <a href="{{ url_for('my_trips', status='All') }}"
+                   class="filter-btn {{ 'active' if current_filter == 'All' else '' }}">ALL</a>
 
-        <h2 class="trips-header-title">FLIGHT MANIFEST / ORDER HISTORY</h2>
+                <a href="{{ url_for('my_trips', status='Active') }}"
+                   class="filter-btn {{ 'active' if current_filter == 'Active' else '' }}">ACTIVE</a>
 
-        {% if orders %}
-        <table class="styled-table">
-            <thead>
-                <tr>
-                    <th>Order Ref</th>
-                    <th>Route</th>
-                    <th>Date & Time</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in orders %}
-                <tr class="trip-row">
-                    <td><span class="order-id">{{ order.order_code }}</span></td>
+                <a href="{{ url_for('my_trips', status='Executed') }}"
+                   class="filter-btn {{ 'active' if current_filter == 'Executed' else '' }}">COMPLETED</a>
 
-                    <td>
-                        <span class="route-badge">
-                            {{ order.source_airport }} ➝ {{ order.destination_airport }}
-                        </span>
-                        <div style="font-size: 0.8em; color: #777; margin-top: 5px;">Flight {{ order.flight_id }}</div>
-                    </td>
-
-                    <td style="color: #e0e0e0;">
-                        {{ order.departure_date }}
-                        <br>
-                        <span style="color: var(--neon-yellow); font-family: monospace;">{{ order.departure_time }}</span>
-                    </td>
-
-                    <td><span class="price-tag">${{ order.total_payment }}</span></td>
-
-                    <td>
-                        {% set status_class = 'status-active' %}
-                        {% if 'Cancel' in order.status %}
-                            {% set status_class = 'status-cancelled' %}
-                        {% elif order.status == 'Executed' or order.status == 'Arrived' %}
-                            {% set status_class = 'status-executed' %}
-                        {% endif %}
-
-                        <span class="status-badge {{ status_class }}">{{ order.status }}</span>
-                    </td>
-
-                    <td>
-                        {% if order.status == 'Active' %}
-                            <form action="{{ url_for('cancel_order', order_code=order.order_code) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this trip?');">
-                                <button type="submit" class="btn-cancel-sm">CANCEL</button>
-                            </form>
-                        {% else %}
-                            <span style="color: #555; font-size: 0.8em;">—</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <div style="text-align: center; padding: 50px; background: #1a1d24; border-radius: 10px; border: 1px dashed #444;">
-                <h3 style="color: #888;">NO FLIGHT RECORDS FOUND</h3>
-                <a href="/" class="search-btn" style="text-decoration: none; display: inline-block; margin-top: 20px;">BOOK A FLIGHT</a>
+                <a href="{{ url_for('my_trips', status='Cancelled') }}"
+                   class="filter-btn {{ 'active' if current_filter == 'Cancelled' else '' }}">CANCELLED</a>
             </div>
-        {% endif %}
+        </div>
 
-    </main>
+        <div class="trips-container">
+            {% if orders %}
+                {% for order in orders %}
+                <div class="trip-card">
+                    <div class="trip-header">
+                        <span class="trip-code">#{{ order.order_code }}</span>
+                        <span class="trip-date">{{ order.order_date }}</span>
+                    </div>
+
+                    <div class="trip-route">
+                        <span class="airport-code">{{ order.source_airport }}</span>
+                        <span class="arrow">➝</span>
+                        <span class="airport-code">{{ order.destination_airport }}</span>
+                    </div>
+
+                    <div class="trip-details">
+                        <div class="detail-item">
+                            <span class="label">DEPARTURE</span>
+                            <span class="value">{{ order.departure_date }} {{ order.departure_time }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">TICKETS</span>
+                            <span class="value">{{ order.ticket_count }}</span>
+                        </div>
+                         <div class="detail-item">
+                            <span class="label">TOTAL</span>
+                            <span class="value">${{ order.total_price }}</span>
+                        </div>
+                    </div>
+
+                    <div class="trip-footer">
+                        <span class="status-badge status-{{ order.status.split(' ')[0]|lower }}">
+                            {{ order.status|upper }}
+                        </span>
+
+                        {% if order.status == 'Active' %}
+                        <form action="{{ url_for('cancel_order', order_code=order.order_code) }}" method="POST" onsubmit="return confirm('Cancel this order? A 5% fee applies.');">
+                            <button type="submit" class="btn-cancel-trip">CANCEL ORDER</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-trips">
+                    <h3>NO FLIGHTS FOUND</h3>
+                    <p>No trips match your current filter.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
 </body>
 </html>

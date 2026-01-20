@@ -29,14 +29,6 @@ def load_user(user_id):
 
 @app.route('/')
 def homepage():
-    # Automatic update - flights that there times passed becomes arrived
-    with db_cur() as cursor:
-        cursor.execute("""
-                UPDATE Flights 
-                SET status = 'Arrived' 
-                WHERE status = 'Active' 
-                AND TIMESTAMP(departure_date, departure_time) < NOW()
-            """)
     # [cite_start]Detect user type for flight visibility [cite: 46]
     u_type = current_user.user_type if current_user.is_authenticated else 'Guest'
 
@@ -78,8 +70,12 @@ def login():
 def signup():
     """Handles the signup process."""
     if request.method == 'POST':
-        # Collect all form fields into a dictionary
+        # 1. Get standard fields
         customer_data = request.form.to_dict()
+
+        # 2. EXPLICITLY get the list of phones (overwriting the single value)
+        customer_data['phones'] = request.form.getlist('phone')
+
         # Call the backend logic
         success, message = register_new_customer(customer_data)
         if success:
@@ -161,6 +157,8 @@ def complete_booking():
         return redirect(url_for('book_flight', flight_id=flight_id))
 
 
+# In code/main.py
+
 @app.route('/manager/set_price', methods=['POST'])
 @login_required
 def set_flights_price():
@@ -170,30 +168,54 @@ def set_flights_price():
         return redirect(url_for('homepage'))
 
     flight_id = request.form.get('flight_id')
+    # Get prices from the form, defaulting if empty (though HTML validation usually handles this)
     econ_price = float(request.form.get('economy_price', 150.00))
     biz_price = float(request.form.get('business_price', 350.00))
 
-    # Save to our global dictionary
-    MANAGER_PRICES[flight_id] = {
-        'Economy': econ_price,
-        'Business': biz_price
-    }
+    # --- FIX START: Update Database instead of Dictionary ---
+    with db_cur() as cursor:
+        try:
+            # Update Economy Class Price
+            # We filter by flight_id and class_type.
+            # Note: This updates the price for this flight ID regardless of date/airplane
+            # (which is consistent with how the ID is used in this system).
+            cursor.execute("""
+                UPDATE Classes_In_Flights 
+                SET price = %s 
+                WHERE flight_id = %s AND class_type = 'Economy'
+            """, (econ_price, flight_id))
 
-    flash(f"Prices for flight {flight_id} updated successfully!", "success")
-    return redirect(url_for('homepage')) # Or manager dashboard
+            # Update Business Class Price
+            cursor.execute("""
+                UPDATE Classes_In_Flights 
+                SET price = %s 
+                WHERE flight_id = %s AND class_type = 'Business'
+            """, (biz_price, flight_id))
+
+            flash(f"Prices for flight {flight_id} updated successfully!", "success")
+
+        except Exception as e:
+            flash(f"Error updating prices: {str(e)}", "danger")
+    # --- FIX END ---
+
+    return redirect(url_for('homepage'))
+
 
 @app.route('/mytrips')
 @login_required
 def my_trips():
-    """Displays the order history for the registered user."""
-    # Ensure only registered users can access this page
+    """Displays the order history for the registered user with filtering."""
     if current_user.user_type != 'Registered':
         flash("Only registered customers have a saved history.", "warning")
         return redirect(url_for('homepage'))
 
-    # Fetch data using the utility function
-    orders = get_customer_history(current_user.email)
-    return render_template('mytrips.html', orders=orders)
+    # Get filter from URL, default to 'All'
+    status_filter = request.args.get('status', 'All')
+
+    # Pass the filter to the database function
+    orders = get_customer_history(current_user.email, status_filter)
+
+    return render_template('mytrips.html', orders=orders, current_filter=status_filter)
 
 
 @app.route('/cancel_order/<string:order_code>', methods=['POST'])
@@ -252,78 +274,124 @@ def cancel_flight(flight_id):
     return redirect(url_for('homepage'))
 
 
-@app.route('/add_flight', methods=['POST'])
+# In code/main.py
+
+# In code/main.py
+
+# In code/main.py
+
+@app.route('/add_flight', methods=['GET', 'POST'])
 @login_required
 def add_flight():
     if current_user.user_type != 'Manager':
         flash("Unauthorized", "danger")
         return redirect(url_for('homepage'))
 
-    # חילוץ נתונים מהטופס
-    f_id = request.form.get('flight_id')
-    f_date = request.form.get('departure_date')
-    f_time = request.form.get('departure_time')
-    plane_id = request.form.get('airplane_id')
-    origin = request.form.get('source_airport')
-    dest = request.form.get('destination_airport')
-    runway = request.form.get('runway_num')
+    step = request.form.get('step', '1')
 
-    try:
-        # Unite the departure date and time to one object
-        flight_datetime_str = f"{f_date} {f_time}"
-        flight_dt = datetime.strptime(flight_datetime_str, '%Y-%m-%d %H:%M')
+    # --- STEP 1: ROUTE ---
+    if step == '1':
+        with db_cur() as cursor:
+            cursor.execute("SELECT source_airport, destination_airport, flight_duration FROM Flight_Routes")
+            routes = cursor.fetchall()
+        return render_template('add_flight.html', step=1, routes=routes)
 
-        # Check if the date has been passed
-        if flight_dt < datetime.now():
-            flash("Error: You cannot add a flight in the past!", "danger")
+    # --- STEP 2: LOGISTICS ---
+    elif step == '2':
+        route_key = request.form.get('route_key')
+        if not route_key:
+            return redirect(url_for('add_flight'))
+
+        source, dest = route_key.split('-')
+        with db_cur() as cursor:
+            cursor.execute(
+                "SELECT flight_duration FROM Flight_Routes WHERE source_airport=%s AND destination_airport=%s",
+                (source, dest))
+            res = cursor.fetchone()
+            duration = res['flight_duration']
+
+        return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration)
+
+    # --- STEP 3: RESOURCES ---
+    elif step == '3':
+        f_id = request.form.get('flight_id')
+        date = request.form.get('departure_date')
+        time = request.form.get('departure_time')
+        runway = request.form.get('runway_num')
+        source = request.form.get('source')
+        dest = request.form.get('dest')
+        duration = int(request.form.get('duration'))
+
+        # A. VALIDATE FLIGHT ID (Uniqueness)
+        if check_flight_id_exists(f_id):
+            flash(f"Error: Flight ID '{f_id}' is already in use.", "danger")
+            return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
+                                   prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
+
+        # B. VALIDATE RUNWAY (Availability)
+        conflict_msg = check_runway_conflict(date, time, runway)
+        if conflict_msg:
+            flash(conflict_msg, "danger")
+            return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
+                                   prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
+
+        # C. GET RESOURCES
+        planes, pilots, attendants = get_available_resources(date, time, duration)
+
+        is_long_haul = duration > 360
+        req_pilots = 3 if is_long_haul else 2
+        req_attendants = 6 if is_long_haul else 3
+
+        if not planes:
+            flash("No aircraft available for this time slot.", "danger")
+            return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
+                                   prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
+
+        if len(pilots) < req_pilots or len(attendants) < req_attendants:
+            flash(f"Insufficient crew. Need {req_pilots} Pilots, {req_attendants} Attendants.", "danger")
+            return render_template('add_flight.html', step=2, source=source, dest=dest, duration=duration,
+                                   prev_fid=f_id, prev_date=date, prev_time=time, prev_runway=runway)
+
+        return render_template('add_flight.html', step=3,
+                               flight_id=f_id, departure_date=date, departure_time=time, runway_num=runway,
+                               source=source, dest=dest, duration=duration,
+                               planes=planes, pilots=pilots, attendants=attendants,
+                               is_long_haul=is_long_haul)
+
+    # --- FINISH: COMMIT ---
+    elif step == 'finish':
+        success, msg = create_flight_final_step(request.form)
+        if success:
+            flash(msg, "success")
             return redirect(url_for('homepage'))
-
-    except ValueError:
-        flash("Invalid date or time format.", "danger")
-        return redirect(url_for('homepage'))
-
-    with db_cur() as cursor:
-        try:
-            # Validation - checks runaways conflicts - Is there a flight on the same date and one hour difference that runs on the same runaway
-
-            conflict_query = """
-                            SELECT flight_id, departure_time 
-                            FROM Flights 
-                            WHERE departure_date = %s 
-                              AND runway_num = %s 
-                              AND departure_time BETWEEN SUBTIME(%s, '01:00:00') AND ADDTIME(%s, '01:00:00')
-                        """
-            cursor.execute(conflict_query, (f_date, runway, f_time, f_time))
-            conflicts = cursor.fetchall()
-
-            if conflicts:
-                # if there are results we have conflicts
-                flash(
-                    f"Error: Runway {runway} is busy within 1 hour of {f_time}. Conflicting flight(s): {[c['flight_id'] for c in conflicts]}",
-                    "danger")
-                return redirect(url_for('homepage'))
-
-            # Validation - Is the plane exists?
-            cursor.execute("SELECT airplane_id FROM Airplanes WHERE airplane_id = %s", (plane_id,))
-            if not cursor.fetchone():
-                flash(f"Error: Airplane {plane_id} does not exist.", "danger")
-                return redirect(url_for('homepage'))
-
-            # הוספת הטיסה לפי הסכימה: flight_id, departure_date, airplane_id, source, destination, status, time, runway
-            sql = """
-                INSERT INTO Flights (flight_id, departure_date, airplane_id, source_airport, destination_airport, status, departure_time, runway_num)
-                VALUES (%s, %s, %s, %s, %s, 'Active', %s, %s)
-            """
-            cursor.execute(sql, (f_id, f_date, plane_id, origin, dest, f_time, runway))
-            flash("Flight added successfully!", "success")
-        except Exception as e:
-            flash(f"Error adding flight: {str(e)}", "danger")
+        else:
+            flash(msg, "danger")
+            # If failed, restart at step 1 for safety
+            return redirect(url_for('add_flight'))
 
     return redirect(url_for('homepage'))
+@app.route('/add_route', methods=['POST'])
+@login_required
+def add_route():
+    if current_user.user_type != 'Manager':
+        flash("Unauthorized", "danger")
+        return redirect(url_for('homepage'))
 
+    source = request.form.get('source_airport').upper()
+    dest = request.form.get('destination_airport').upper()
+    duration = request.form.get('duration')
 
-# main.py
+    # Check if we should redirect back to add_flight or homepage
+    redirect_target = request.form.get('redirect_target', 'homepage')
 
+    success, message = create_new_route(source, dest, duration)
+
+    if success:
+        flash(message, "success")
+    else:
+        flash(message, "danger")
+
+    return redirect(url_for(redirect_target))
 @app.route('/order_summary', methods=['POST'])
 def order_summary():
     """Displays a summary of the order including total price before final confirmation."""
@@ -415,6 +483,39 @@ def manager_reports():
 
     return render_template('reports.html', data=data)
 
+
+@app.route('/guest_manage', methods=['GET', 'POST'])
+def guest_manage():
+    """Handles guest access to view and cancel bookings."""
+    if request.method == 'POST':
+        action = request.form.get('action')
+        order_code = request.form.get('order_code')
+        email = request.form.get('email')
+
+        order_data = get_order_by_code(order_code, email)
+
+        if not order_data:
+            flash("Order not found or email does not match.", "danger")
+            return redirect(url_for('guest_manage'))
+
+        #view details
+        if action == 'view':
+            return render_template('guest_order.html', order=order_data, email=email)
+
+        # 3. cancel order, calculate cancellation fee
+        elif action == 'cancel':
+            success, msg = cancel_order_transaction(order_code)
+
+            updated_order = get_order_by_code(order_code, email)
+
+            if success:
+                flash(msg, "success")
+            else:
+                flash(msg, "danger")
+
+            return render_template('guest_order.html', order=updated_order, email=email)
+
+    return render_template('guest_login.html')
 
 if __name__ == '__main__':
     #Running in debug mode for easier development
