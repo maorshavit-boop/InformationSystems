@@ -9,7 +9,6 @@
     --neon-yellow: #ffb400;
     --neon-green: #00ff41;
     --neon-red: #ff3333;
-    /* New Orange Color */
     --neon-orange: #ff9e22;
     --text-white: #e0e0e0;
     --text-muted: #858a96;
@@ -33,7 +32,6 @@ body {
    ========================================= */
 .header-container {
     display: grid;
-    /* 3 Columns: Left (Nav), Center (Text), Right (Logo) */
     grid-template-columns: 1fr 2fr 1fr;
     align-items: center;
     padding: 15px 40px;
@@ -48,7 +46,7 @@ body {
 /* --- LEFT: Vertical Navigation --- */
 .header-left-nav {
     display: flex;
-    flex-direction: column; /* Stack Vertically */
+    flex-direction: column;
     gap: 8px;
     align-items: flex-start;
 }
@@ -68,7 +66,7 @@ body {
 
 .nav-link-orange:hover {
     color: #ffca28;
-    padding-left: 10px; /* Slight movement on hover */
+    padding-left: 10px;
     border-left: 2px solid var(--neon-orange);
     text-shadow: 0 0 8px rgba(255, 158, 34, 0.6);
 }
@@ -94,27 +92,25 @@ body {
     text-transform: uppercase;
 }
 
-/* --- RIGHT: Logo (Dimmed & Pleasing) --- */
+/* --- RIGHT: Logo --- */
 .header-right-logo {
     display: flex;
     justify-content: flex-end;
 }
 
 .dimmed-logo {
-    /* Magic Fix: Reduces brightness and adds a sepia tone to warm it up */
     filter: brightness(0.8) sepia(0.3) contrast(0.9);
     opacity: 0.9;
     transition: all 0.5s ease;
 }
 
 .dimmed-logo:hover {
-    /* Restores full brightness on hover */
     filter: brightness(1) sepia(0) contrast(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
     opacity: 1;
 }
 
 /* =========================================
-   3. SEXY LOGIN CARD
+   3. LOGIN CARD
    ========================================= */
 .login-overlay {
     display: flex;
@@ -363,13 +359,11 @@ footer {
     cursor: pointer;
     font-size: 16px;
 }
-/* ... existing code ... */
 
 /* =========================================
    9. SIGNUP PAGE STYLES (NEW)
    ========================================= */
 
-/* מחלקה מיוחדת ל-BODY של דף ההרשמה כדי למרכז את הטופס */
 body.signup-mode {
     display: flex;
     justify-content: center;
@@ -381,7 +375,7 @@ body.signup-mode {
 .signup-container {
     background-color: #1e1e1e;
     width: 100%;
-    max-width: 650px; /* קצת יותר רחב לטובת הגריד */
+    max-width: 650px;
     padding: 40px;
     border-radius: 15px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
@@ -411,7 +405,6 @@ body.signup-mode {
     margin: 0;
 }
 
-/* סידור השדות בגריד */
 .form-row {
     display: grid;
     gap: 15px;
@@ -421,17 +414,8 @@ body.signup-mode {
 .two-cols { grid-template-columns: 1fr 1fr; }
 .three-cols { grid-template-columns: 1fr 1fr 1fr; }
 
-/* שימוש במחלקות קיימות עם התאמות קטנות */
 .signup-container .input-group {
-    margin-bottom: 0; /* הגריד מטפל ברווחים */
-}
-
-.signup-container label {
-    color: var(--accent-blue);
-    font-size: 0.8em;
-    font-weight: bold;
-    margin-bottom: 5px;
-    display: block;
+    margin-bottom: 0;
 }
 
 .signup-container input {
@@ -445,9 +429,16 @@ body.signup-mode {
     font-family: 'Inter', sans-serif;
 }
 
-/* 1. Change the label text color to Orange */
+.signup-container input:focus {
+    border-color: var(--accent-blue);
+    background: #000;
+    box-shadow: 0 0 10px rgba(41, 98, 255, 0.2);
+    outline: none;
+}
+
+/* UPDATED ORANGE STYLES */
 .signup-container label {
-    color: var(--neon-orange);  /* <--- CHANGED TO ORANGE */
+    color: var(--neon-orange);
     font-size: 0.8em;
     font-weight: bold;
     margin-bottom: 5px;
@@ -455,12 +446,11 @@ body.signup-mode {
     font-family: 'Share Tech Mono', monospace;
 }
 
-/* 2. Change the button background to Orange */
 .btn-signup {
     width: 100%;
     padding: 15px;
-    background: var(--neon-orange); /* <--- CHANGED TO ORANGE */
-    color: black;                   /* <--- Black text is easier to read on orange */
+    background: var(--neon-orange);
+    color: black;
     border: none;
     border-radius: 8px;
     font-family: 'Share Tech Mono', monospace;
@@ -471,13 +461,12 @@ body.signup-mode {
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* Optional: Add an orange glow on hover */
 .btn-signup:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(255, 158, 34, 0.4); /* Orange glow */
+    box-shadow: 0 10px 20px rgba(255, 158, 34, 0.4);
 }
 
-/* לינק חזרה */
+/* Back Link */
 .back-link-container {
     text-align: center;
     margin-top: 25px;
@@ -509,18 +498,18 @@ body.signup-mode {
 
 .trips-header-title {
     font-family: 'Share Tech Mono', monospace;
-    color: var(--neon-orange); /* שימוש בצבע החדש שלך */
+    color: var(--neon-orange);
     font-size: 2em;
     margin-bottom: 20px;
     border-bottom: 1px solid #333;
     padding-bottom: 10px;
 }
 
-/* טבלה מודרנית ללא גבולות רגילים */
+/* Modern Styled Table */
 .styled-table {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 0 15px; /* רווח בין השורות */
+    border-spacing: 0 15px;
 }
 
 .styled-table thead th {
@@ -544,23 +533,21 @@ body.signup-mode {
     border-bottom: 1px solid #333;
 }
 
-/* עיגול פינות לשורה כולה */
 .trip-row td:first-child { border-left: 1px solid #333; border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
 .trip-row td:last-child { border-right: 1px solid #333; border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
 
 .trip-row:hover {
-    transform: scale(1.01); /* אפקט גדילה עדין */
+    transform: scale(1.01);
     background-color: #252a33;
     border-color: var(--accent-blue);
     box-shadow: 0 10px 25px rgba(0,0,0,0.4);
 }
 
-/* עיצוב נתונים ספציפיים */
 .order-id { font-family: 'Share Tech Mono', monospace; color: var(--accent-blue); font-size: 1.1em; }
 .route-badge { font-weight: bold; color: white; background: #111; padding: 5px 10px; border-radius: 4px; border: 1px solid #444; }
 .price-tag { color: var(--neon-green); font-weight: bold; font-family: 'Share Tech Mono', monospace; }
 
-/* תגיות סטטוס */
+/* Status Badges */
 .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
 .status-active { background: rgba(0, 255, 65, 0.1); color: var(--neon-green); border: 1px solid var(--neon-green); }
 .status-cancelled { background: rgba(255, 51, 51, 0.1); color: var(--neon-red); border: 1px solid var(--neon-red); }
@@ -577,6 +564,7 @@ body.signup-mode {
     font-family: 'Share Tech Mono', monospace;
 }
 .btn-cancel-sm:hover { background: var(--neon-red); color: white; }
+
 /* =========================================
    12. FILTER BUTTONS STYLES
    ========================================= */
@@ -624,139 +612,7 @@ body.signup-mode {
     box-shadow: 0 0 10px rgba(41, 98, 255, 0.3);
     border-color: var(--accent-blue);
 }
-/* =========================================
-   Order Details Page (Dark Theme)
-   ========================================= */
 
-/* Scoped to this specific page so it doesn't break others */
-body.order-details-page {
-    background-color: #0f1012; /* Very dark background */
-    color: #ffffff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Header Styling */
-.order-details-page .header-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    padding: 20px;
-    background-color: #0f1012;
-}
-
-.order-details-page .header-left {
-    position: absolute;
-    left: 40px;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.order-details-page .btn-back {
-    color: #665c84; /* Muted purple color from image */
-    font-size: 0.9em;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.order-details-page .btn-back:hover {
-    color: #fff;
-}
-
-/* Logo box - white square background */
-.logo-box {
-    background-color: white;
-    padding: 10px;
-    border-radius: 2px;
-    display: inline-block;
-}
-
-/* Main Container */
-.container-width {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px 20px;
-}
-
-/* Order Info Header */
-.trip-header-info {
-    color: #a0a0a0;
-    font-size: 0.95em;
-    margin-bottom: 20px;
-}
-
-/* Status Badge - Green Outline */
-.status-container {
-    text-align: center;
-    margin: 20px 0;
-}
-
-.status-badge {
-    display: inline-block;
-    border: 1px solid #28a745;
-    color: #28a745;
-    background: transparent;
-    border-radius: 50px;
-    padding: 8px 24px;
-    font-size: 1em;
-    font-weight: bold;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-
-/* Ticket List Styling */
-.tickets-title {
-    margin-top: 40px;
-    font-size: 1.1em;
-    color: #fff;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #333; /* Subtle divider */
-}
-
-.trip-details {
-    padding: 15px 0;
-    border-bottom: 1px dashed #444; /* Dashed line separator */
-    color: #e0e0e0;
-    font-size: 0.9em;
-    line-height: 1.6;
-}
-
-.detail-line {
-    display: block;
-    margin-bottom: 2px;
-}
-
-/* Footer / Price / Cancel */
-.trip-footer {
-    margin-top: 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.total-price {
-    font-size: 1.8em;
-    font-weight: bold;
-    color: #333; /* Dark grey text */
-}
-
-.btn-cancel-trip {
-    background-color: #dc3545;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 0.9em;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-.btn-cancel-trip:hover {
-    background-color: #c82333;
-}
 /* =========================================
    13. MANAGER DASHBOARD BUTTONS (NEW)
    ========================================= */
@@ -824,4 +680,16 @@ body.order-details-page {
     color: #000;
     box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
     transform: translateY(-2px);
+}
+
+/* =========================================
+   14. CARD STYLES (New Global Cards)
+   ========================================= */
+.neon-card {
+    background: var(--board-bg);
+    border: 1px solid #333;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    margin-bottom: 30px;
 }
