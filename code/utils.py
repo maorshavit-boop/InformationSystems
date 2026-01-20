@@ -1,6 +1,5 @@
 import random
 import string
-import datetime
 from flask_login import UserMixin
 import mysql.connector
 from contextlib import contextmanager
@@ -9,11 +8,13 @@ from contextlib import contextmanager
 db_config = {
     "host": "localhost",
     "user": "root",
-    "password": "root", # Updated to your requested password
+    "password": "root",  # Updated to your requested password
     "database": "FLYTAU",
     "autocommit": True
 }
-#Context manager to handle database connection and cursor lifecycle.
+
+
+# Context manager to handle database connection and cursor lifecycle.
 @contextmanager
 def db_cur():
     mydb = None
@@ -181,6 +182,7 @@ def get_order_by_code(order_code, email):
             'tickets': tickets
         }
 
+
 def cancel_order_transaction(order_code):
     """
     Executes order cancellation:
@@ -199,7 +201,7 @@ def cancel_order_transaction(order_code):
         """
         cursor.execute(query_check, (order_code,))
         res = cursor.fetchone()
-        
+
         if not res:
             return False, "Order not found."
         flight_dt = datetime.combine(res['departure_date'], (datetime.min + res['departure_time']).time())
@@ -208,7 +210,7 @@ def cancel_order_transaction(order_code):
             return False, "Cancellation is only allowed up to 36 hours before the flight."
         original_price = float(res['current_total'])
         cancellation_fee = original_price * 0.05
-        
+
         try:
             cursor.execute("UPDATE Orders SET status = 'Cancelled by customer' WHERE order_code = %s", (order_code,))
             cursor.execute("""
@@ -216,9 +218,9 @@ def cancel_order_transaction(order_code):
                 SET price = %s / (SELECT count FROM (SELECT COUNT(*) as count FROM Flight_Tickets WHERE order_code = %s) as tmp)
                 WHERE order_code = %s
             """, (cancellation_fee, order_code, order_code))
-            
+
             return True, f"Order cancelled. You were charged a 5% fee (${cancellation_fee:.2f})."
-            
+
         except Exception as e:
             return False, f"Database error: {e}"
 
@@ -229,30 +231,6 @@ def get_flight_details(flight_id):
         query = "SELECT * FROM Flights WHERE flight_id = %s"
         cursor.execute(query, (flight_id,))
         return cursor.fetchone()
-
-def get_seats_for_flight(flight_id):
-    """
-    Retrieves all seats for the airplane assigned to this flight
-    and checks if they are already occupied.
-    """
-    with db_cur() as cursor:
-        cursor.execute("SELECT airplane_id FROM Flights WHERE flight_id = %s", (flight_id,))
-        flight = cursor.fetchone()
-        if not flight: return []
-        query = """
-            SELECT s.row_num, s.column_num, s.class_type,
-                   CASE WHEN t.order_code IS NOT NULL THEN 1 ELSE 0 END AS is_taken
-            FROM Seats s
-            LEFT JOIN Flight_Tickets t 
-                ON s.row_num = t.row_num 
-                AND s.column_num = t.column_num 
-                AND s.airplane_id = t.airplane_id
-                AND t.flight_id = %s
-            WHERE s.airplane_id = %s
-            ORDER BY s.class_type, s.row_num, s.column_num
-        """
-        cursor.execute(query, (flight_id, flight['airplane_id']))
-        return cursor.fetchall()
 
 
 def get_flight_seat_map(flight_id):
@@ -305,9 +283,6 @@ def get_flight_seat_map(flight_id):
         return flight, {'map': seat_map, 'max_row': max_row}
 
 
-MANAGER_PRICES = {}
-
-
 def get_current_price(flight_id, class_type):
     """
     Retrieves the price for a specific flight and class directly from the database.
@@ -328,10 +303,11 @@ def get_current_price(flight_id, class_type):
             return float(result['price'])
 
         # Raise an error to stop execution immediately if data is missing
-        raise ValueError(f"CRITICAL: No price set for Flight {flight_id} in {class_type} class. Please choose a different ticket")
+        raise ValueError(
+            f"CRITICAL: No price set for Flight {flight_id} in {class_type} class. Please choose a different ticket")
 
 
-#Creates a booking
+# Creates a booking
 def create_booking(flight_id, selected_seats, user, guest_data=None):
     """
     Updated to support the new schema:
@@ -414,10 +390,13 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
         except Exception as e:
             print(f"Booking Error: {e}")
             return False, str(e), None
+
+
 class Worker:
     """
     Base class for all employees (Pilots, Flight Attendants, Managers).
     """
+
     def __init__(self, first_name, middle_name, last_name, city, street, house_num, start_date):
         self.first_name = first_name
         self.middle_name = middle_name
@@ -436,39 +415,12 @@ class Worker:
         return f"{self.street} {self.house_num}, {self.city}"
 
 
-class Pilot(Worker):
-    """
-    Maps to 'Pilots' table.
-    """
-    def __init__(self, pilot_id, first_name, middle_name, last_name, city, street, house_num, start_date, long_flight_training):
-        super().__init__(first_name, middle_name, last_name, city, street, house_num, start_date)
-        self.id = pilot_id
-        self.long_flight_training = True if long_flight_training else False
-
-#Returns the workers role
-    def get_role(self):
-        return "Pilot"
-
-
-class FlightAttendant(Worker):
-    """
-    Maps to 'Flight_Attendants' table.
-    """
-    def __init__(self, attendant_id, first_name, middle_name, last_name, city, street, house_num, start_date, long_flight_training):
-        super().__init__(first_name, middle_name, last_name, city, street, house_num, start_date)
-        self.id = attendant_id
-        self.long_flight_training = True if long_flight_training else False
-
-    # Returns the workers role
-    def get_role(self):
-        return "Flight Attendant"
-
-
 class Manager(Worker, UserMixin):
     """
     Maps to 'Managers' table.
     Inherits from UserMixin to support Flask-Login.
     """
+
     def __init__(self, manager_id, password, first_name, middle_name, last_name, city, street, house_num, start_date):
         super().__init__(first_name, middle_name, last_name, city, street, house_num, start_date)
         self.id = manager_id
@@ -479,83 +431,22 @@ class Manager(Worker, UserMixin):
     def get_role(self):
         return "Manager"
 
-def get_all_pilots():
-    """Fetches rows from Pilots table and converts them to Pilot objects."""
-    pilots_list = []
-    with db_cur() as cursor:
-        cursor.execute("SELECT * FROM Pilots")
-        results = cursor.fetchall()
-        
-        for row in results:
-            p = Pilot(
-                pilot_id=row['pilot_id'],
-                first_name=row['first_name'],
-                middle_name=row['middle_name'],
-                last_name=row['last_name'],
-                city=row['city'],
-                street=row['street'],
-                house_num=row['house_num'],
-                start_date=row['start_date'],
-                long_flight_training=row['long_flight_training']
-            )
-            pilots_list.append(p)
-    return pilots_list
 
-def get_all_attendants():
-    """Fetches rows from Flight_Attendants table and converts to objects."""
-    attendants_list = []
-    with db_cur() as cursor:
-        cursor.execute("SELECT * FROM Flight_Attendants")
-        results = cursor.fetchall()
-        
-        for row in results:
-            fa = FlightAttendant(
-                attendant_id=row['attendant_id'],
-                first_name=row['first_name'],
-                middle_name=row['middle_name'],
-                last_name=row['last_name'],
-                city=row['city'],
-                street=row['street'],
-                house_num=row['house_num'],
-                start_date=row['start_date'],
-                long_flight_training=row['long_flight_training']
-            )
-            attendants_list.append(fa)
-    return attendants_list
-
-def get_all_managers(manager_id):
-    """Fetches rows from Managers table and converts to objects."""
-    with db_cur() as cursor:
-        cursor.execute("SELECT * FROM Managers WHERE manager_id = %s", (manager_id,))
-        row = cursor.fetchone()
-        
-        if row:
-            return Manager(
-                manager_id=row['manager_id'],
-                first_name=row['first_name'],
-                middle_name=row['middle_name'],
-                last_name=row['last_name'],
-                city=row['city'],
-                street=row['street'],
-                house_num=row['house_num'],
-                start_date=row['start_date'],
-                password=row['password']
-            )
-    return None
-
-#NEED TO CHECK WHY ID AND EMAIL!!!
+# NEED TO CHECK WHY ID AND EMAIL!!!
 class User(UserMixin):
     """
 Class that represents unregistered user table
     """
+
     def __init__(self, email, first_name, last_name, middle_name=None):
-        self.id = email  
+        self.id = email
         self.email = email
         self.first_name = first_name
         self.last_name = last_name
         self.middle_name = middle_name
         self.user_type = 'Guest'
-#Returns full name
+
+    # Returns full name
     def get_full_name(self):
         if self.middle_name:
             return f"{self.first_name} {self.middle_name} {self.last_name}"
@@ -566,52 +457,15 @@ class RegisteredUser(User):
     """
 Class of registered users, inherits from user class
     """
-    def __init__(self, email, first_name, last_name, passport_num, birth_date, password, registration_date, middle_name=None):
-        super().__init__(email, first_name, last_name, middle_name)        
+
+    def __init__(self, email, first_name, last_name, passport_num, birth_date, password, registration_date,
+                 middle_name=None):
+        super().__init__(email, first_name, last_name, middle_name)
         self.passport_num = passport_num
         self.birth_date = birth_date
         self.password = password
         self.registration_date = registration_date
         self.user_type = 'Registered'
-
-    # Open code/utils.py and add these imports if missing
-
-
-from flask import flash
-
-
-# Add these new functions at the bottom of utils.py
-
-def get_all_resources():
-    """
-    Fetches resources needed for the Add Flight form:
-    - Planes (to check size)
-    - Pilots (to assign crew)
-    - Attendants (to assign crew)
-    - Routes (to check duration)
-    """
-    with db_cur() as cursor:
-        cursor.execute("SELECT * FROM Airplanes")
-        planes = cursor.fetchall()
-
-        cursor.execute("SELECT * FROM Pilots")
-        pilots = cursor.fetchall()
-
-        cursor.execute("SELECT * FROM Flight_Attendants")
-        attendants = cursor.fetchall()
-
-        cursor.execute("SELECT source_airport, destination_airport, flight_duration FROM Flight_Routes")
-        routes = cursor.fetchall()
-
-    return planes, pilots, attendants, routes
-
-
-# In code/utils.py
-
-# In code/utils.py
-
-# In code/utils.py
-
 
 
 # Helper to check Runway Availability (15 min buffer)
@@ -682,31 +536,11 @@ def get_available_resources(date, new_start_time, new_duration):
     return planes, pilots, attendants
 
 
-def check_plane_availability(plane_id, date, time, duration):
-    with db_cur() as cursor:
-        cursor.execute("""
-            SELECT flight_id, departure_time FROM Flights 
-            WHERE departure_date = %s 
-              AND airplane_id = %s
-              AND status != 'Cancelled'
-              AND ABS(TIMESTAMPDIFF(MINUTE, departure_time, %s)) < (%s + 60)
-        """, (date, plane_id, time, duration))
-        conflict = cursor.fetchone()
-        if conflict:
-            return f"Aircraft Conflict: Plane {plane_id} is already assigned to Flight {conflict['flight_id']}."
-    return None
-# In code/utils.py
-
 def check_plane_availability(plane_id, date, new_start_time, new_duration):
     """
-    Checks if a plane is busy by looking at BOTH the new flight's duration
-    AND the existing flights' durations.
+    Checks if a plane is busy using robust overlap logic (same as get_available_resources).
     """
     with db_cur() as cursor:
-        # We need to JOIN Flight_Routes to know how long the EXISTING flights last.
-        # Logic: Overlap exists if (StartA < EndB) AND (StartB < EndA)
-        # End Times include a 60 minute buffer.
-
         cursor.execute("""
             SELECT f.flight_id, f.departure_time, r.flight_duration
             FROM Flights f
@@ -715,10 +549,10 @@ def check_plane_availability(plane_id, date, new_start_time, new_duration):
               AND f.airplane_id = %s
               AND f.status != 'Cancelled'
               AND (
-                  -- 1. The Existing Flight (f) starts BEFORE New Flight Ends
+                  -- 1. Existing flight starts inside new flight's window
                   f.departure_time < ADDTIME(%s, SEC_TO_TIME((%s + 60)*60))
                   AND 
-                  -- 2. The New Flight starts BEFORE Existing Flight (f) Ends
+                  -- 2. New flight starts inside existing flight's window
                   %s < ADDTIME(f.departure_time, SEC_TO_TIME((r.flight_duration + 60)*60))
               )
         """, (date, plane_id, new_start_time, new_duration, new_start_time))
@@ -728,73 +562,7 @@ def check_plane_availability(plane_id, date, new_start_time, new_duration):
             return f"Aircraft Conflict: Plane {plane_id} is busy with Flight {conflict['flight_id']}."
     return None
 
-# Final Commit Function
-def create_flight_final_step(form_data):
-    f_id = form_data['flight_id']
-    date = form_data['departure_date']
-    time = form_data['departure_time']
-    plane_id = form_data['airplane_id']
-    source = form_data['source']
-    dest = form_data['dest']
-    runway = form_data['runway_num']
-    duration = int(form_data['duration'])
 
-    price_economy = form_data.get('price_economy')
-    price_business = form_data.get('price_business')
-    pilot_ids = form_data.getlist('pilots')
-    attendant_ids = form_data.getlist('attendants')
-
-    # FINAL SAFETY CHECKS
-    if check_flight_id_exists(f_id):
-        return False, f"CRITICAL: Flight ID {f_id} is already in use."
-
-    if check_runway_conflict(date, time, runway):
-        return False, "CRITICAL: Runway conflict detected."
-
-    if check_plane_availability(plane_id, date, time, duration):
-        return False, "CRITICAL: Aircraft conflict detected."
-
-    with db_cur() as cursor:
-        try:
-            # 1. Get Plane Size
-            cursor.execute("SELECT size FROM Airplanes WHERE airplane_id = %s", (plane_id,))
-            res = cursor.fetchone()
-            plane_size = res['size']
-
-            # 2. Insert Flight
-            cursor.execute("""
-                INSERT INTO Flights (flight_id, departure_date, airplane_id, source_airport, destination_airport, status, departure_time, runway_num)
-                VALUES (%s, %s, %s, %s, %s, 'Active', %s, %s)
-            """, (f_id, date, plane_id, source, dest, time, runway))
-
-            # 3. Insert Crew
-            for pid in pilot_ids:
-                cursor.execute(
-                    "INSERT INTO Pilots_In_Flights (pilot_id, flight_id, departure_date) VALUES (%s, %s, %s)",
-                    (pid, f_id, date))
-            for aid in attendant_ids:
-                cursor.execute(
-                    "INSERT INTO Attendants_In_Flights (attendant_id, flight_id, departure_date) VALUES (%s, %s, %s)",
-                    (aid, f_id, date))
-
-            # 4. Insert Prices
-            cursor.execute("""
-                INSERT INTO Classes_In_Flights (flight_id, departure_date, class_type, airplane_id, price)
-                VALUES (%s, %s, 'Economy', %s, %s)
-            """, (f_id, date, plane_id, price_economy))
-
-            # Only insert Business if plane is Big
-            if plane_size == 'Big':
-                if not price_business:
-                    return False, "Business Price required for Big plane."
-                cursor.execute("""
-                    INSERT INTO Classes_In_Flights (flight_id, departure_date, class_type, airplane_id, price)
-                    VALUES (%s, %s, 'Business', %s, %s)
-                """, (f_id, date, plane_id, price_business))
-
-            return True, "Flight Created Successfully!"
-        except Exception as e:
-            return False, f"Database Error: {str(e)}"
 def check_flight_id_exists(flight_id):
     with db_cur() as cursor:
         cursor.execute("SELECT flight_id FROM Flights WHERE flight_id = %s", (flight_id,))
@@ -802,19 +570,12 @@ def check_flight_id_exists(flight_id):
             return True
     return False
 
-# ... (keep check_runway_conflict and get_available_resources as they were) ...
 
 def create_flight_final_step(form_data):
     """
-    Final Commit with DOUBLE-CHECK for ID uniqueness.
+    Final Commit with FULL SAFETY CHECKS (ID, Runway, Plane).
     """
     f_id = form_data['flight_id']
-
-    # 1. FINAL SAFETY CHECK: Flight ID Uniqueness
-    if check_flight_id_exists(f_id):
-        return False, f"CRITICAL: Flight ID {f_id} was taken by another manager just now."
-
-    # Extract rest of data
     date = form_data['departure_date']
     time = form_data['departure_time']
     plane_id = form_data['airplane_id']
@@ -827,6 +588,27 @@ def create_flight_final_step(form_data):
     pilot_ids = form_data.getlist('pilots')
     attendant_ids = form_data.getlist('attendants')
 
+    # We fetch it from DB to ensure accuracy
+    with db_cur() as cursor:
+        cursor.execute("SELECT flight_duration FROM Flight_Routes WHERE source_airport=%s AND destination_airport=%s",
+                       (source, dest))
+        route_res = cursor.fetchone()
+        if not route_res:
+            return False, "Error: Route not found."
+        duration = route_res['flight_duration']
+
+    # 2. RUN FINAL SAFETY CHECKS (Race Conditions)
+    if check_flight_id_exists(f_id):
+        return False, f"CRITICAL: Flight ID {f_id} was taken by another manager just now."
+
+    if check_runway_conflict(date, time, runway):
+        return False, "CRITICAL: Runway conflict detected (Race Condition)."
+
+    plane_conflict = check_plane_availability(plane_id, date, time, duration)
+    if plane_conflict:
+        return False, f"CRITICAL: {plane_conflict}"
+
+    # --- 3. INSERT DATA ---
     with db_cur() as cursor:
         try:
             # Insert Flight
@@ -861,44 +643,6 @@ def create_flight_final_step(form_data):
         except Exception as e:
             return False, str(e)
 
-def get_filtered_resources(is_long_haul):
-    """
-    Fetches resources filtered by flight duration rules.
-    NO JAVASCRIPT: The server decides what to show.
-    """
-    with db_cur() as cursor:
-        # 1. Routes (Always needed for the top selector)
-        cursor.execute("SELECT source_airport, destination_airport, flight_duration FROM Flight_Routes")
-        routes = cursor.fetchall()
-
-        # 2. Filter Planes
-        # Rule: Long Haul -> Big Planes Only. Short Haul -> All Planes.
-        if is_long_haul:
-            cursor.execute("SELECT * FROM Airplanes WHERE size = 'Big'")
-        else:
-            cursor.execute("SELECT * FROM Airplanes")
-        planes = cursor.fetchall()
-
-        # 3. Filter Pilots
-        # Rule: Long Haul -> Trained Pilots Only.
-        if is_long_haul:
-            cursor.execute("SELECT * FROM Pilots WHERE long_flight_training = 1")
-        else:
-            cursor.execute("SELECT * FROM Pilots")
-        pilots = cursor.fetchall()
-
-        # 4. Filter Attendants
-        # Rule: Long Haul -> Trained Attendants Only.
-        if is_long_haul:
-            cursor.execute("SELECT * FROM Flight_Attendants WHERE long_flight_training = 1")
-        else:
-            cursor.execute("SELECT * FROM Flight_Attendants")
-        attendants = cursor.fetchall()
-
-    return routes, planes, pilots, attendants
-
-
-# In code/utils.py
 
 def create_new_route(source, dest, duration):
     """
@@ -933,6 +677,7 @@ def create_new_route(source, dest, duration):
         except Exception as e:
             return False, f"Database Error: {str(e)}"
 
+
 def get_user_by_id(user_id):
     """
   Returns registered user or manager with given user id.
@@ -940,7 +685,7 @@ def get_user_by_id(user_id):
     with db_cur() as cursor:
         cursor.execute("SELECT * FROM Registered_Customers WHERE email = %s", (user_id,))
         res = cursor.fetchone()
-        
+
         if res:
             return RegisteredUser(
                 email=res['email'],
@@ -954,7 +699,7 @@ def get_user_by_id(user_id):
             )
         cursor.execute("SELECT * FROM Managers WHERE manager_id = %s", (user_id,))
         res = cursor.fetchone()
-        
+
         if res:
             return Manager(
                 manager_id=res['manager_id'],
@@ -967,253 +712,45 @@ def get_user_by_id(user_id):
                 start_date=res['start_date'],
                 password=res['password']
             )
-            
+
     return None
 
 
-class FlightRoute:
+def add_new_worker(data):
     """
-    Maps to Flight Routes table.
+    Adds a new Pilot or Flight Attendant to the database with ALL details.
     """
-    def __init__(self, source_airport, destination_airport, flight_duration):
-        self.source_airport = source_airport
-        self.destination_airport = destination_airport
-        self.flight_duration = flight_duration
+    role = data.get('role')  # 'Pilot' or 'Attendant'
 
+    # ID Generation
+    prefix = "P" if role == 'Pilot' else "FA"
+    table = "Pilots" if role == 'Pilot' else "Flight_Attendants"
+    col_id = "pilot_id" if role == 'Pilot' else "attendant_id"
 
-class Flight:
-    """
-    Maps to Flights table.
-    """
-    def __init__(self, flight_id, departure_date, airplane_id, source_airport, 
-                 destination_airport, status, departure_time, runway_num):
-        self.flight_id = flight_id
-        self.departure_date = departure_date
-        self.airplane_id = airplane_id
-        self.source_airport = source_airport
-        self.destination_airport = destination_airport
-        self.status = status
-        self.departure_time = departure_time
-        self.runway_num = runway_num
+    # Data extraction
+    first = data.get('first_name')
+    last = data.get('last_name')
+    middle = data.get('middle_name')
+    city = data.get('city')
+    street = data.get('street')
+    house = data.get('house_num')
 
-    def get_datetime(self):
-        """Helper to combine date and time for display"""
-        return f"{self.departure_date} {self.departure_time}"
+    # Handle Checkbox (returns 'on' if checked, None if not)
+    is_trained = 1 if data.get('long_flight_training') else 0
 
-
-class Order:
-    """
-    Maps to Orders table.
-    """
-    def __init__(self, order_code, email, status, order_date, customer_type):
-        self.order_code = order_code
-        self.email = email
-        self.status = status
-        self.order_date = order_date
-        self.customer_type = customer_type
-
-
-class Ticket:
-    """
-    Maps to Flight Tickets table.
-    """
-    def __init__(self, order_code, flight_id, row_num, column_num, class_type, airplane_id, price):
-        self.order_code = order_code
-        self.flight_id = flight_id
-        self.row_num = row_num
-        self.column_num = column_num
-        self.class_type = class_type
-        self.airplane_id = airplane_id
-        self.price = price
-
-#returns a string of the seat number
-    def get_seat_code(self):
-        return f"{self.row_num}{self.column_num}"
-
-def get_all_flights():
-    """
-   Retrieves all flights from database and returns as flight objects
-    """
-    flights_obj_list = []
     with db_cur() as cursor:
-        cursor.execute("SELECT * FROM Flights")
-        results = cursor.fetchall()
-        
-        for row in results:
-            flight = Flight(
-                flight_id=row['flight_id'],
-                departure_date=row['departure_date'],
-                airplane_id=row['airplane_id'],
-                source_airport=row['source_airport'],
-                destination_airport=row['destination_airport'],
-                status=row['status'],
-                departure_time=row['departure_time'],
-                runway_num=row['runway_num']
-            )
-            flights_obj_list.append(flight)
-            
-    return flights_obj_list
+        # Find next ID
+        cursor.execute(f"SELECT COUNT(*) as cnt FROM {table}")
+        count = cursor.fetchone()['cnt'] + 1
+        new_id = f"{prefix}-{str(count).zfill(3)}"
 
-def get_all_flight_routes(self):
-    """
-    Retrieves all flight routes from the database and returns as flight route objects
-    """
-    routes = []
-    query = "SELECT source_airport, destination_airport, flight_duration FROM Flight_Routes"
-    self.cursor.execute(query)
-    
-    for row in self.cursor.fetchall():
-        route = {
-            "source_airport": row[0],
-            "destination_airport": row[1],
-            "flight_duration": row[2]
-        }
-        routes.append(route)
-        
-    return routes
-
-def get_all_orders(self):
-    """
-    Retrieves all orders from the database and returns as  order objects.
-    """
-    query = "SELECT order_code, email, status, order_date, customer_type FROM Orders"
-    self.cursor.execute(query)
-
-    orders = []
-    for row in self.cursor.fetchall():
-        new_order = Order(
-            order_code=row[0],
-            email=row[1],
-            status=row[2],
-            order_date=row[3],
-            customer_type=row[4]
-        )
-        orders.append(new_order)
-
-    return orders
-
-def get_all_tickets(self):
-    """
-    Retrieves all flight tickets from the database and returns as ticket objects.
-    """
-    query = """
-    SELECT order_code, flight_id, row_num, column_num, class_type, airplane_id, price 
-    FROM Flight_Tickets
-    """
-    self.cursor.execute(query)
-
-    tickets = []
-    for row in self.cursor.fetchall():
-        new_ticket = Ticket(
-            order_code=row[0],
-            flight_id=row[1],
-            row_num=row[2],
-            column_num=row[3],
-            class_type=row[4],
-            airplane_id=row[5],
-            price=float(row[6]) if row[6] is not None else 0.0
-        )
-        tickets.append(new_ticket)
-
-    return tickets
-
-class Airplane:
-    """
-    Maps to Airplanes table.
-    """
-    def __init__(self, airplane_id, manufacturer, purchase_date, size):
-        self.airplane_id = airplane_id
-        self.manufacturer = manufacturer
-        self.purchase_date = purchase_date
-        self.size = size  # Enum: 'Small', 'Big'
-
-    def __str__(self):
-        return f"Airplane {self.airplane_id} ({self.manufacturer})"
-
-
-class AirplaneClass:
-    """
-    Maps to Airplane Classes table.
-    """
-    def __init__(self, class_type, airplane_id, columns_count, rows_count):
-        self.class_type = class_type
-        self.airplane_id = airplane_id
-        self.columns_count = columns_count
-        self.rows_count = rows_count
-
-    def __str__(self):
-        return f"{self.class_type} class for Plane {self.airplane_id}"
-
-
-class Seat:
-    """
-    Maps to Seats table.
-    """
-    def __init__(self, row_num, column_num, class_type, airplane_id):
-        self.row_num = row_num
-        self.column_num = column_num
-        self.class_type = class_type
-        self.airplane_id = airplane_id
-
-    def __str__(self):
-        return f"Seat {self.row_num}-{self.column_num} ({self.class_type})"
-
-def get_all_airplanes(self):
-    """
-    Retrieves all airplanes from the database and returns as airplane object.
-    """
-    airplanes = []
-    query = "SELECT airplane_id, manufacturer, purchase_date, size FROM Airplanes"
-    self.cursor.execute(query)
-
-    for row in self.cursor.fetchall():
-        # CAUTION: Ensure you have an 'Airplane' class defined that accepts these arguments
-        new_airplane = Airplane(
-            airplane_id=row[0],
-            manufacturer=row[1],
-            purchase_date=row[2],
-            size=row[3]
-        )
-        airplanes.append(new_airplane)
-
-    return airplanes
-
-def get_all_airplane_classes(self):
-    """
-    Retrieves all airplane class  from the database and returns as objects.
-    """
-    classes = []
-    query = "SELECT class_type, airplane_id, columns_count, rows_count FROM Airplane_Classes"
-    self.cursor.execute(query)
-
-    for row in self.cursor.fetchall():
-        new_class = AirplaneClass(
-            class_type=row[0],
-            airplane_id=row[1],
-            columns_count=row[2],
-            rows_count=row[3]
-        )
-        classes.append(new_class)
-
-    return classes
-
-def get_all_seats(self):
-    """
-    Retrieves all seats from the database.
-    """
-    seats = []
-    query = "SELECT row_num, column_num, class_type, airplane_id FROM Seats"
-    self.cursor.execute(query)
-
-    for row in self.cursor.fetchall():
-        # Check that your Seat class __init__ arguments match this order
-        new_seat = Seat(
-            row_num=row[0],
-            column_num=row[1],
-            class_type=row[2],
-            airplane_id=row[3]
-        )
-        seats.append(new_seat)
-
-    return seats
-
+        try:
+            query = f"""
+                INSERT INTO {table} 
+                ({col_id}, first_name, middle_name, last_name, city, street, house_num, start_date, long_flight_training) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, CURDATE(), %s)
+            """
+            cursor.execute(query, (new_id, first, middle, last, city, street, house, is_trained))
+            return True, f"Added {role} {new_id} successfully."
+        except Exception as e:
+            return False, str(e)
