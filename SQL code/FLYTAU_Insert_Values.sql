@@ -282,9 +282,9 @@ INSERT INTO Flight_Tickets (order_code, flight_id, departure_date, row_num, colu
 ('ORD-015', 'FL-112', '2026-06-20', 1, 1, 'Economy',  'AP-B737-2', 450);
 
 INSERT INTO Registered_Customers (email, first_name, last_name, passport_num, birth_date, password, customer_type, registration_date) VALUES
-('reg1@test.com', 'Michael, ', 'Jordan', '1990-01-01', 'pass1', 'Registered', '2025-01-01'),
-('reg2@test.com', 'Deni, ', 'Avdija', '1992-05-05', 'pass2', 'Registered', '2025-02-01'),
-('reg3@test.com', 'Lebron, ', 'James', '1988-10-10', 'pass3', 'Registered', '2025-03-01');
+('reg1@test.com', 'Michael, ', 'Jordan','12345678', '1990-01-01', 'pass1', 'Registered', '2025-01-01'),
+('reg2@test.com', 'Deni, ', 'Avdija', '12345679','1992-05-05', 'pass2', 'Registered', '2025-02-01'),
+('reg3@test.com', 'Lebron, ', 'James', '12345677', '1988-10-10', 'pass3', 'Registered', '2025-03-01');
 
 INSERT INTO Unregistered_Customers (email, first_name, last_name, customer_type) VALUES
 ('guest1@test.com', 'אורח', 'אחד', 'Unregistered'),
