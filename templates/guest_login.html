@@ -5,46 +5,49 @@
     <title>Manage Booking - FLYTAU</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    <header>
-        <div class="header-container">
-            <div class="header-left">
-                <a href="/" class="btn-back">← BACK TO HOME</a>
-            </div>
-            <img src="{{ url_for('static', filename='logo.png') }}" width="100">
-        </div>
-    </header>
+<body class="signup-mode">
 
-    <main class="login-overlay" style="position: relative; background: none; height: auto; padding-top: 50px;">
+    <div class="signup-container" style="max-width: 450px;">
+
+        <div class="signup-header">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU Logo" width="100" style="margin-bottom: 10px;">
+            <h2>MANAGE BOOKING</h2>
+            <p>Access your flight details & tickets</p>
+        </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="flash-container" style="max-width: 400px; margin: 0 auto 20px auto;">
-              {% for category, message in messages %}
-                <div class="flash-message {{ category }}">{{ message }}</div>
-              {% endfor %}
-            </div>
-          {% endif %}
+            {% if messages %}
+                <div class="flash-container" style="margin-bottom: 20px;">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         {% endwith %}
 
-        <div class="login-card">
-            <h2 class="login-title">Manage Booking</h2>
-            <p class="login-subtitle">View details or cancel your flight</p>
+        <form action="/guest_manage" method="POST">
 
-            <form action="/guest_manage" method="POST" class="login-form">
-                <input type="hidden" name="action" value="view">
+            <div class="input-group">
+                <label>Booking Reference (Order ID)</label>
+                <input type="text" name="order_code" placeholder="#NTOOVW6Z" required style="text-transform: uppercase;">
+            </div>
 
-                <div class="input-group">
-                    <label>Order Code</label>
-                    <input type="text" name="order_code" placeholder="e.g. A1B2C3D4" required>
-                </div>
-                <div class="input-group">
-                    <label>Email Address</label>
-                    <input type="email" name="email" placeholder="Used for booking" required>
-                </div>
-                <button type="submit" class="login-btn">Find Booking</button>
-            </form>
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="john@example.com" required>
+            </div>
+
+            <button type="submit" class="btn-signup" style="margin-top: 20px;">
+                FIND MY BOOKING
+            </button>
+
+        </form>
+
+        <div class="back-link-container">
+            <a href="/" class="back-link">← Return to Home Page</a>
         </div>
-    </main>
+
+    </div>
+
 </body>
 </html>

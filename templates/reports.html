@@ -6,55 +6,89 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .reports-container { max-width: 1200px; margin: 20px auto; padding: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        /* Special overrides for the reports grid layout */
+        .reports-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
         .full-width { grid-column: span 2; }
-        h2 { border-bottom: 2px solid #0056b3; padding-bottom: 10px; color: #333; }
-        .stat-box { font-size: 3em; font-weight: bold; color: #28a745; text-align: center; margin: 40px 0; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-        th { background: #f4f4f4; }
+        /* Stat Box Styling */
+        .stat-box {
+            font-family: var(--font-mono);
+            font-size: 4em;
+            font-weight: bold;
+            color: var(--neon-green);
+            text-align: center;
+            margin: 30px 0;
+            text-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+        }
+
+        /* Chart Containers */
+        canvas {
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-container" style="display:flex; justify-content:space-between; align-items:center; padding: 10px 40px; background:#fff; border-bottom:1px solid #ddd;">
-            <img src="{{ url_for('static', filename='logo.png') }}" width="100">
-            <h1>Managerial Reports</h1>
-            <a href="/"><button style="background:#6c757d; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Back to Dashboard</button></a>
+
+    <header class="header-container">
+        <div class="header-left-nav">
+            <a href="/" class="nav-link-orange"> ← BACK TO DASHBOARD </a>
+        </div>
+
+        <div class="header-center">
+            <span class="welcome-text-large">MANAGERIAL REPORTS</span>
+        </div>
+
+        <div class="header-right-logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="100" class="dimmed-logo">
         </div>
     </header>
 
-    <main class="reports-container">
+    <main class="trips-container" style="max-width: 1200px;">
 
-        <div class="grid">
-            <div class="card">
-                <h2>1. Average Flight Occupancy</h2>
+        <div class="reports-grid">
+
+            <div class="neon-card">
+                <h3 style="color: var(--neon-orange); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top:0;">
+                    1. AVG FLIGHT OCCUPANCY
+                </h3>
                 <div class="stat-box">{{ data.occupancy[0]['avg_capacity_percentage'] | round(2) }}%</div>
-                <p style="text-align:center; color:#666;">Calculated based on executed flights only.</p>
+                <p style="text-align:center; color: #888; font-size: 0.9em;">
+                    Calculated based on executed flights only.
+                </p>
             </div>
 
-            <div class="card">
-                <h2>4. Monthly Cancellation Rate</h2>
+            <div class="neon-card">
+                <h3 style="color: var(--neon-orange); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top:0;">
+                    4. MONTHLY CANCELLATION RATE
+                </h3>
                 <canvas id="cancelChart"></canvas>
             </div>
 
-            <div class="card full-width">
-                <h2>2. Total Revenue by Plane & Class</h2>
+            <div class="neon-card full-width">
+                <h3 style="color: var(--accent-blue); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top:0;">
+                    2. TOTAL REVENUE BY PLANE & CLASS
+                </h3>
                 <canvas id="revenueChart" height="100"></canvas>
             </div>
 
-            <div class="card full-width">
-                <h2>3. Crew Flight Hours (Short vs Long)</h2>
+            <div class="neon-card full-width">
+                <h3 style="color: var(--accent-blue); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top:0;">
+                    3. CREW FLIGHT HOURS (SHORT vs LONG)
+                </h3>
                 <canvas id="crewChart" height="100"></canvas>
             </div>
 
-            <div class="card full-width">
-                <h2>5. Monthly Plane Activity Summary</h2>
+            <div class="neon-card full-width">
+                <h3 style="color: var(--neon-yellow); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top:0;">
+                    5. MONTHLY PLANE ACTIVITY SUMMARY
+                </h3>
                 <div style="overflow-x: auto;">
-                    <table>
+                    <table class="styled-table">
                         <thead>
                             <tr>
                                 <th>Plane ID</th>
@@ -67,13 +101,15 @@
                         </thead>
                         <tbody>
                             {% for row in data.plane_activity %}
-                            <tr>
-                                <td>{{ row.airplane_id }}</td>
+                            <tr class="trip-row">
+                                <td style="font-weight: bold; color: var(--neon-yellow);">{{ row.airplane_id }}</td>
                                 <td>{{ row.activity_month }}</td>
                                 <td>{{ row.flights_executed }}</td>
-                                <td style="color: {{ 'red' if row.flights_cancelled > 0 else 'black' }}">{{ row.flights_cancelled }}</td>
+                                <td style="color: {{ '#ff4444' if row.flights_cancelled > 0 else '#555' }}; font-weight: bold;">
+                                    {{ row.flights_cancelled }}
+                                </td>
                                 <td>{{ row.utilization_percentage }}%</td>
-                                <td>{{ row.dominant_route or '-' }}</td>
+                                <td style="color: #fff;">{{ row.dominant_route or '-' }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -85,6 +121,11 @@
     </main>
 
     <script>
+        // 1. Set Global Defaults for Dark Mode Charts
+        Chart.defaults.color = '#e0e0e0';      // White text
+        Chart.defaults.borderColor = '#333';   // Dark grid lines
+        Chart.defaults.font.family = "'Share Tech Mono', monospace";
+
         const revenueData = {{ data.revenue | tojson }};
         const crewData = {{ data.crew | tojson }};
         const cancelData = {{ data.cancellations | tojson }};
@@ -97,8 +138,10 @@
                 datasets: [{
                     label: 'Revenue ($)',
                     data: revenueData.map(d => d.total_revenue),
-                    backgroundColor: '#0056b3',
-                    borderRadius: 5
+                    backgroundColor: 'rgba(41, 98, 255, 0.6)', // Neon Blue
+                    borderColor: '#2962ff',
+                    borderWidth: 1,
+                    borderRadius: 4
                 }]
             }
         });
@@ -112,12 +155,16 @@
                     {
                         label: 'Short Flights (<6h)',
                         data: crewData.map(d => d.Short_Flight_Hours),
-                        backgroundColor: '#28a745'
+                        backgroundColor: 'rgba(0, 255, 65, 0.6)', // Neon Green
+                        borderColor: '#00ff41',
+                        borderWidth: 1
                     },
                     {
                         label: 'Long Flights (>6h)',
                         data: crewData.map(d => d.Long_Flight_Hours),
-                        backgroundColor: '#ffc107'
+                        backgroundColor: 'rgba(255, 158, 34, 0.6)', // Neon Orange
+                        borderColor: '#ff9e22',
+                        borderWidth: 1
                     }
                 ]
             },
@@ -132,10 +179,11 @@
                 datasets: [{
                     label: 'Cancellation Rate (%)',
                     data: cancelData.map(d => d.cancellation_rate_percent),
-                    borderColor: '#dc3545',
-                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    borderColor: '#ff4444',
+                    backgroundColor: 'rgba(255, 68, 68, 0.1)',
                     fill: true,
-                    tension: 0.3
+                    tension: 0.3,
+                    pointBackgroundColor: '#ff4444'
                 }]
             },
             options: { scales: { y: { beginAtZero: true, max: 100 } } }

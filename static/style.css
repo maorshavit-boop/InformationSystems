@@ -445,21 +445,24 @@ body.signup-mode {
     font-family: 'Inter', sans-serif;
 }
 
-.signup-container input:focus {
-    border-color: var(--accent-blue);
-    background: #000;
-    box-shadow: 0 0 10px rgba(41, 98, 255, 0.2);
-    outline: none;
+/* 1. Change the label text color to Orange */
+.signup-container label {
+    color: var(--neon-orange);  /* <--- CHANGED TO ORANGE */
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+    font-family: 'Share Tech Mono', monospace;
 }
 
-/* כפתור הרשמה ייעודי */
+/* 2. Change the button background to Orange */
 .btn-signup {
     width: 100%;
     padding: 15px;
-    background: linear-gradient(135deg, var(--accent-blue), #00d4ff);
+    background: var(--neon-orange); /* <--- CHANGED TO ORANGE */
+    color: black;                   /* <--- Black text is easier to read on orange */
     border: none;
     border-radius: 8px;
-    color: white;
     font-family: 'Share Tech Mono', monospace;
     font-size: 1.2em;
     font-weight: bold;
@@ -468,9 +471,10 @@ body.signup-mode {
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
+/* Optional: Add an orange glow on hover */
 .btn-signup:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 10px 20px rgba(255, 158, 34, 0.4); /* Orange glow */
 }
 
 /* לינק חזרה */
@@ -752,4 +756,72 @@ body.order-details-page {
 
 .btn-cancel-trip:hover {
     background-color: #c82333;
+}
+/* =========================================
+   13. MANAGER DASHBOARD BUTTONS (NEW)
+   ========================================= */
+
+.manager-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Base style for all manager buttons */
+.btn-manager {
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: bold;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: 1px solid;
+    letter-spacing: 1px;
+}
+
+/* 1. Reports Button (Blue/Purple) */
+.btn-reports {
+    color: var(--accent-blue);
+    border-color: var(--accent-blue);
+    background: rgba(41, 98, 255, 0.05);
+}
+.btn-reports:hover {
+    background: var(--accent-blue);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(41, 98, 255, 0.5);
+    transform: translateY(-2px);
+    text-shadow: 0 0 5px white;
+}
+
+/* 2. Set Prices Button (Orange/Gold) */
+.btn-prices {
+    color: var(--neon-orange);
+    border-color: var(--neon-orange);
+    background: rgba(255, 158, 34, 0.05);
+}
+.btn-prices:hover {
+    background: var(--neon-orange);
+    color: #000;
+    box-shadow: 0 0 15px rgba(255, 158, 34, 0.5);
+    transform: translateY(-2px);
+}
+
+/* 3. Add Flight Button (Green) */
+.btn-add-flight {
+    color: var(--neon-green);
+    border-color: var(--neon-green);
+    background: rgba(0, 255, 65, 0.05);
+}
+.btn-add-flight:hover {
+    background: var(--neon-green);
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+    transform: translateY(-2px);
 }

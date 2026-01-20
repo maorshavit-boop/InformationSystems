@@ -12,7 +12,11 @@
     <div class="header-container">
         <nav class="header-left-nav">
             <a href="/" class="nav-link-orange">DEPARTURES</a>
-            <a href="{{ url_for('guest_manage') }}" class="nav-link-orange">MANAGE BOOKING</a>
+
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('guest_manage') }}" class="nav-link-orange">MANAGE BOOKING</a>
+            {% endif %}
+
             {% if current_user.is_authenticated %}
                 {% if current_user.user_type == 'Registered' %}
                     <a href="/mytrips" class="nav-link-orange">MY TRIPS</a>
@@ -79,14 +83,16 @@
         <div class="manager-header">
             <h2>COMMAND CENTER</h2>
             <div class="manager-actions">
-                <a href="{{ url_for('manager_reports') }}" class="btn-report">📊 SYSTEM REPORTS</a>
+                <a href="{{ url_for('manager_reports') }}" class="btn-manager btn-reports">
+                    <span>📊</span> SYSTEM REPORTS
+                </a>
 
-                <button onclick="document.getElementById('update-price-div').toggleDisplay()" class="btn-create" style="background-color: #ff9e22; color: #000;">
-                    $ SET PRICES
+                <button onclick="document.getElementById('update-price-div').toggleDisplay()" class="btn-manager btn-prices">
+                    <span>$</span> SET PRICES
                 </button>
 
-                <a href="{{ url_for('add_flight') }}" class="btn-create" style="text-decoration: none; display: inline-block; text-align: center;">
-                    + NEW FLIGHT PLAN
+                <a href="{{ url_for('add_flight') }}" class="btn-manager btn-add-flight">
+                    <span>+</span> NEW FLIGHT PLAN
                 </a>
             </div>
         </div>
