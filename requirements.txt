@@ -1,6 +1,3 @@
 Flask
 Flask-Login
 mysql-connector-python
-random
-datetime
-string
