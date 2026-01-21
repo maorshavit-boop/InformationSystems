@@ -102,9 +102,9 @@ FLYTAU/
 
 |      Homepage - flight dashboard      |      Manager Dashboard - System Reports       |
 |:-------------------------------------:|:---------------------------------------------:|
-|   ![Homepage](static/Homepage.jpeg)   | ![System Reports](static/manager reports.png) |
+|   ![Homepage](static/Homepage.jpeg)   | ![System Reports](static/manager_reports.png) |
 |           **Book a flight**           |                 **My trips**                  |
-| ![Book a flights](static/booking.png) | ![My trips](static/my trips.jpeg) 
+| ![Book a flights](static/booking.png) | ![My trips](static/my_trips.jpeg) 
 
 ## 📝 License
 This project was created for the Information Systems course.
