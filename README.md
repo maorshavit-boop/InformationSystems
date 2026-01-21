@@ -78,20 +78,20 @@ The system comes pre-loaded with data. Use these accounts to test different flow
 
 ## 📂 Project Structure
 
-FLYTAU/
-├── code/
-│   ├── main.py            # Application entry point & Routes
-│   ├── utils.py           # Database helpers & Business logic
-│   └── sql_queries.py     # Complex SQL queries for reports
-├── SQL code/
-│   ├── Create_Schema.sql  # DDL
-│   └── Insert_Values.sql  # DML (Mock Data)
-├── static/
-│   ├── style.css          # Global styling (Dark/Neon)
-│   └── logo.png           # Assets
-├── templates/
-│   ├── homepage.html      # Main Flight Board
-│   ├── booking.html       # Seat Map
+FLYTAU/  
+├── code/  
+│   ├── main.py            # Application entry point & Routes  
+│   ├── utils.py           # Database helpers & Business logic  
+│   └── sql_queries.py     # Complex SQL queries for reports  
+├── SQL code/  
+│   ├── Create_Schema.sql  # DDL  
+│   └── Insert_Values.sql  # DML (Mock Data)  
+├── static/  
+│   ├── style.css          # Global styling (Dark/Neon)  
+│   └── logo.png           # Assets  
+├── templates/  
+│   ├── homepage.html      # Main Flight Board  
+│   ├── booking.html       # Seat Map  
 │   ├── reports.html       # Manager Analytics
 │   ├── add_flight.html    # Manager Wizard
 │   └── ... (other HTML templates)
