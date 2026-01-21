@@ -1,8 +1,19 @@
-# ✈️ FLYTAU - Airline Management System
+# FLYTAU - Flight Management System ✈️
 
-**FLYTAU** is a comprehensive, full-stack web application designed to manage an airline's operations. It facilitates the entire flight lifecycle: from scheduling routes and assigning crew resources (Pilots, Attendants, Aircraft) to handling customer bookings, cancellations, and generating managerial analytics.
+A comprehensive Flight Management and Booking System built with Python (Flask) and MySQL.
+The system allows users to search for flights, book seats, and manage their reservations, while providing administrators with tools to manage the flight schedule and generate reports.
 
-The system features a distinct separation of concerns between **Guest Users**, **Registered Frequent Flyers**, and **Airline Managers**, all wrapped in a modern, responsive "Dark/Neon" UI.
+## 🌐 Live Demo
+The system is deployed and available for use at:
+**https://maorshavit10.pythonanywhere.com**
+
+---
+
+## 🛠️ Tech Stack
+* **Backend:** Python 3.13, Flask
+* **Database:** MySQL (Hosted on PythonAnywhere)
+* **Frontend:** HTML5, CSS3, JavaScript
+* **Authentication:** Flask-Login
 
 ---
 
@@ -21,47 +32,67 @@ The system features a distinct separation of concerns between **Guest Users**, *
 * **Guest Management:** Unregistered users can manage bookings via Order Reference & Email.
 * **My Trips:** Order history, ticket wallet, and cancellation options (with automatic fee calculation).
 
----
-
-## 🛠️ Tech Stack
-
-* **Backend:** Python 3.x, Flask, Flask-Login.
-* **Database:** MySQL (Relational Schema).
-* **Frontend:** HTML5, CSS3 (Custom Neon Theme), Jinja2 Templates, JavaScript, Chart.js.
-* **Database Connector:** `mysql-connector-python`.
-
-
----
-
 ## ⚙️ Installation & Setup
 
-### 1. Clone the Repository
+### ☁️ Option A: Cloud Deployment (PythonAnywhere)
+
+1.  **Prerequisites:**
+    * PythonAnywhere **Developer** account ($10/month).
+    * MySQL Database created in the dashboard.
+
+2.  **Setup Environment (Bash Console):**
+    ```bash
+    # Clone the repository
+    git clone [https://github.com/maorshavit-boop/InformationSystems.git](https://github.com/maorshavit-boop/InformationSystems.git)
+    
+    # Create Virtual Environment (Python 3.13)
+    mkvirtualenv --python=/usr/bin/python3.13 myenv
+    
+    # Install Dependencies
+    cd InformationSystems
+    pip install -r requirements.txt
+    ```
+
+3.  **Database Configuration:**
+    * Update `code/utils.py` with your **PythonAnywhere** MySQL host and password.
+    * Run the SQL scripts via the **MySQL Console** in the dashboard.
+
+4.  **Web Tab Configuration:**
+    * **Source code:** `/home/yourusername/InformationSystems/code`
+    * **Virtualenv:** `myenv`
+    * **WSGI File:** Update to import `main` from `code/`.
+
+---
+
+### 💻 Option B: Local Development (Localhost)
+
+**1. Clone the Repository** 
 ```bash
 git clone [https://github.com/maorshavit-boop/InformationSystems.git](https://github.com/maorshavit-boop/InformationSystems.git)
 cd InformationSystems
 ```
 
-### 2. Install Dependencies from the requirements.ttx
+**2. Install Dependencies from the requirements.txt**
 
-### 3. Database Configuration
+**3. Database Configuration**
 - Make sure you have MySQL Server installed and running.
 - Open the file ```code/utils.py```.
 - Update the db_config dictionary with your local MySQL credentials:
 ```bash
   db_config = {
     "host": "localhost",
-    "user": "root",        # Your MySQL Username
-    "password": "your_password", # Your MySQL Password
+    "user": "YOUR_USER",              # Your Local MySQL Username
+    "password": "YOUR_PASSWORD",      # Your Local MySQL Password
     "database": "FLYTAU",
     "autocommit": True
 }
 ```
-### 4. Initialize Database Schema
+**4. Initialize Database Schema**
 Run the provided SQL scripts in your MySQL Workbench or CLI in this exact order:
 - ```SQL code/Create_Schema_FLYTAU.sql``` (Creates tables and relationships).
 - ```SQL code/FLYTAU_Insert_Values.sql``` (Populates dummy data for testing).
 
-### 5. Run the Application
+**5. Run the Application**
 ``` bash
 cd code
 python main.py
