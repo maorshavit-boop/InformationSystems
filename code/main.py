@@ -661,18 +661,22 @@ def guest_manage():
         order_code = request.form.get('order_code')
         email = request.form.get('email')
 
+        # 1. Attempt to fetch the order
         order_data = get_order_by_code(order_code, email)
 
         if not order_data:
             flash("Order not found or email does not match.", "danger")
             return redirect(url_for('guest_manage'))
 
-        if action == 'view':
+        # 2. Handle Logic
+        # FIX: If action is 'view' OR None (initial login), show the order page.
+        if action == 'view' or action is None:
             return render_template('guest_order.html', order=order_data, email=email)
 
         elif action == 'cancel':
             success, msg = cancel_order_transaction(order_code)
 
+            # Fetch updated data to show the new status
             updated_order = get_order_by_code(order_code, email)
 
             if success:
