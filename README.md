@@ -92,11 +92,11 @@ FLYTAU/
 ├── templates/  
 │   ├── homepage.html      # Main Flight Board  
 │   ├── booking.html       # Seat Map  
-│   ├── reports.html       # Manager Analytics
-│   ├── add_flight.html    # Manager Wizard
-│   └── ... (other HTML templates)
-└── requirements.txt       # Dependencies for the project
-└── README.md              # This file
+│   ├── reports.html       # Manager Analytics  
+│   ├── add_flight.html    # Manager Wizard  
+│   └── ... (other HTML templates)  
+└── requirements.txt       # Dependencies for the project  
+└── README.md              # This file  
 
 ## 📸 Screenshots
 
