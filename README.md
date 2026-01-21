@@ -70,7 +70,7 @@ The application will start at ```http://127.0.0.1:5000/```.
 
 ## 🔑 Login Credentials (for Testing)
 The system comes pre-loaded with data. Use these accounts to test different flows:
-| Role     | Email / ID       | Password | Access                                           |
+| Role     | Email / ID        | Password | Access                                           |
 |----------|-------------------|----------|--------------------------------------------------|
 | Manager  | M-001             | pass1    | Reports, Pricing, Flight Creation, Cancellations |
 | Customer | reg1@test.com     | pass1    | Booking, History, Seat Selection                 |
@@ -95,12 +95,16 @@ FLYTAU/
 │   ├── reports.html       # Manager Analytics
 │   ├── add_flight.html    # Manager Wizard
 │   └── ... (other HTML templates)
-|   requirements.txt       # Dependencies for the project
+└── requirements.txt       # Dependencies for the project
 └── README.md              # This file
 
 ## 📸 Screenshots
 
-
+|      Homepage - flight dashboard      |      Manager Dashboard - System Reports       |
+|:-------------------------------------:|:---------------------------------------------:|
+|   ![Homepage](static/Homepage.jpeg)   | ![System Reports](static/manager reports.png) |
+|           **Book a flight**           |                 **My trips**                  |
+| ![Book a flights](static/booking.png) | ![My trips](static/my trips.jpeg) 
 
 ## 📝 License
 This project was created for the Information Systems course.

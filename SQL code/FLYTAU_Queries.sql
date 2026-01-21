@@ -1,32 +1,41 @@
 USE FLYTAU;
 
--- ==========================================================
--- 1. Average Capacity of Executed Flights
--- ==========================================================
+-- QUERY 1: Average Flight Occupancy
+-- Purpose: Calculates the average seat occupancy percentage for all flights that have successfully 'Arrived'.
+-- Logic:
+-- 1. Counts tickets sold per flight (Active or Executed orders).
+-- 2. Calculates total physical seats per airplane model.
+-- 3. Computes the ratio (Occupied / Total) and averages it across all flights.
+
 SELECT AVG((occupied_seats * 100.0)/ total_seats)  AS avg_capacity_percentage
 FROM (
     SELECT F.flight_id, F.departure_date,
         -- Count tickets sold for this flight (Comparing both ID and Date)
-        (SELECT COUNT(*) 
-         FROM Flight_Tickets FT 
+        (SELECT COUNT(*)
+         FROM Flight_Tickets FT
          JOIN Orders O ON FT.order_code = O.order_code
-         WHERE FT.flight_id = F.flight_id 
-           AND FT.departure_date = F.departure_date 
+         WHERE FT.flight_id = F.flight_id
+           AND FT.departure_date = F.departure_date
            AND O.status IN ('Active', 'Executed')) AS occupied_seats,
-         
+
         -- Calculate total physical seats in the plane (based on model)
-        (SELECT SUM(rows_count * columns_count) 
-         FROM Airplane_Classes AC 
+        (SELECT SUM(rows_count * columns_count)
+         FROM Airplane_Classes AC
          WHERE AC.airplane_id = F.airplane_id) AS total_seats
-         
+
     FROM Flights F
     WHERE F.status = 'Arrived'
 ) AS flight_occupancy_data;
 
 
--- ==========================================================
--- 2. Revenue by Plane Size, Manufacturer, and Class
--- ==========================================================
+
+-- QUERY 2: Revenue Analysis by Aircraft & Class
+-- Purpose: Shows which aircraft models and seat classes generate the most revenue.
+-- Logic:
+--   - Aggregates ticket prices grouped by Manufacturer, Plane Size, and Class Type.
+--   - Includes revenue from 'Active', 'Executed', and 'Cancelled by customer' orders
+--     (assuming cancellation fees are counted as revenue).
+
 SELECT CONCAT(A.manufacturer, ' ', A.size, ' (', FT.class_type, ')') AS label,
        SUM(FT.price) AS total_revenue
 FROM Flight_Tickets FT
@@ -36,9 +45,16 @@ WHERE O.status IN ('Active', 'Executed', 'Cancelled by customer')
 GROUP BY A.size, A.manufacturer, FT.class_type
 ORDER BY total_revenue DESC;
 
--- ==========================================================
--- 3. Cumulative Crew Hours (Pilots & Attendants Union)
--- ==========================================================
+
+
+-- QUERY 3: Crew Workload Analysis (Flight Hours)
+-- Purpose: Tracks flight hours for Pilots and Flight Attendants, categorized by
+-- flight duration (Short vs. Long).
+-- Logic:
+--   - Defines 'Short' as <= 6 hours (360 mins) and 'Long' as > 6 hours.
+--   - Uses UNION ALL to combine data from Pilots and Flight Attendants tables.
+--   - Only counts flights with status 'Arrived'.
+
 SELECT Employee_ID, First_Name, Last_Name,Role,
     -- Short flights (<= 6 hours / 360 minutes)
     ROUND(SUM(CASE WHEN flight_duration <= 360 THEN flight_duration ELSE 0 END) / 60, 2) AS Short_Flight_Hours,
@@ -52,10 +68,10 @@ FROM (
     FROM Pilots P
     JOIN Pilots_In_Flights PIF ON P.pilot_id = PIF.pilot_id
     -- Fix: Join using ID + Date
-    JOIN Flights F ON PIF.flight_id = F.flight_id AND PIF.departure_date = F.departure_date 
+    JOIN Flights F ON PIF.flight_id = F.flight_id AND PIF.departure_date = F.departure_date
     JOIN Flight_Routes R ON F.source_airport = R.source_airport AND F.destination_airport = R.destination_airport
     WHERE F.status = 'Arrived'
-    
+
     UNION ALL
 
     -- Part B: Flight Attendants
@@ -68,12 +84,18 @@ FROM (
     WHERE F.status = 'Arrived'
 ) AS All_Crew_Flights
 GROUP BY Employee_ID, First_Name, Last_Name, Role;
- -- calculating only landed flights, and not current active flights. 
+ -- calculating only landed flights, and not current active flights.
 
--- ==========================================================
--- 4. Monthly Order Cancellation Rate
--- ==========================================================
-SELECT 
+
+
+-- QUERY 4: Monthly Order & Cancellation Trends
+-- Purpose: Monitors the volume of orders and the cancellation rate over time.
+-- Logic:
+--   - Groups data by Year-Month.
+--   - Counts total orders vs. cancelled orders (both by customer and system).
+--   - Calculates the cancellation rate as a percentage.
+
+SELECT
     DATE_FORMAT(order_date, '%Y-%m') AS order_month,
     COUNT(*) AS total_orders,
     SUM(CASE WHEN status IN ('Cancelled by customer', 'Cancelled by system') THEN 1 ELSE 0 END) AS cancelled_orders,
@@ -83,9 +105,14 @@ GROUP BY DATE_FORMAT(order_date, '%Y-%m')
 ORDER BY order_month;
 
 
--- ==========================================================
--- 5. Monthly Plane Activity Summary (Including Dominant Route)
--- ==========================================================
+
+-- QUERY 5: Aircraft Utilization & Dominant Routes
+-- Purpose: Provides detailed operational stats per airplane per month.
+-- Logic:
+-- - Activity Month: Grouping by Year-Month.
+-- - Flights Executed/Cancelled: Simple counts based on status.
+-- - Utilization %: Calculated as (Distinct Days Flown / 30).
+-- - Dominant Route: Subquery to find the most frequent route flown by that specific plane in that specific month.
 SELECT 
     Stats.airplane_id,
     Stats.activity_month,

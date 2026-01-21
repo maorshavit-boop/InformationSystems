@@ -200,48 +200,6 @@ def book_flight(flight_id):
                            flight_info=flight_info)
 
 
-@app.route('/complete_booking', methods=['POST'])
-def complete_booking():
-    """
-        Processes the final booking submission from the user.
-
-        Logic:
-        1. Data Collection: Extracts flight ID and the list of selected seats from the form.
-        2. Validation: Ensures at least one seat was selected.
-        3. User Identification:
-           - If logged in: Uses `current_user` data.
-           - If Guest: Collects name, email, and phone from the form fields.
-        4. Execution: Calls `create_booking` to perform the database transaction.
-
-        Returns:
-            render_template: 'confirmation.html' with the new Order Code on success.
-            redirect: Back to the booking page on failure.
-    """
-
-    flight_id = request.form.get('flight_id')
-    selected_seats = request.form.getlist('selected_seats')
-
-    if not selected_seats:
-        flash("Please select at least one seat.", "warning")
-        return redirect(url_for('book_flight', flight_id=flight_id))
-
-    guest_details = None
-    if not current_user.is_authenticated:
-        guest_details = {
-            'first_name': request.form.get('guest_first'),
-            'last_name': request.form.get('guest_last'),
-            'email': request.form.get('guest_email'),
-            'phone': request.form.get('guest_phone')
-        }
-
-    success, message, order_code = create_booking(flight_id, selected_seats, current_user, guest_details)
-
-    if success:
-        return render_template('confirmation.html', order_code=order_code)
-    else:
-        flash(f"Booking failed: {message}", "danger")
-        return redirect(url_for('book_flight', flight_id=flight_id))
-
 
 @app.route('/manager/set_price', methods=['POST'])
 @login_required
