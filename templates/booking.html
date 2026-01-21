@@ -25,20 +25,17 @@
             font-weight: bold;
             color: #888;
         }
-        /* רווח למעבר (Aisle) */
         .aisle-gap {
             width: 30px;
         }
 
-        /* צבעים מותאמים */
         .seat.business { background-color: #1a237e; color: white; border: 1px solid #000; }
         .seat.economy { background-color: #2196f3; color: white; border: 1px solid #1976d2; }
         .seat.taken { background-color: #bdbdbd !important; cursor: not-allowed; border: 1px solid #999; }
 
-        /* --- הוספנו עיצוב לטופס האורחים --- */
         .guest-form {
             max-width: 600px;
-            margin: 30px auto; /* קצת רווח מלמעלה */
+            margin: 30px auto;
             padding: 20px;
             background: #f9f9f9;
             border: 1px solid #ddd;
@@ -67,7 +64,7 @@
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box; /* חשוב כדי שה-padding לא יחרוג */
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -123,21 +120,16 @@
                                     </label>
                                 </div>
 
-                                {# --- לוגיקה למרווחים (Aisles) --- #}
 
-                                {# תצורה של 4 מושבים (עסקים/מטוס קטן): 2-2 #}
                                 {% if row_len == 4 and loop.index == 2 %}
                                     <div class="aisle-gap"></div>
 
-                                {# תצורה של 6 מושבים (תיירים רגיל/עסקים רחב): 3-3 #}
                                 {% elif row_len == 6 and loop.index == 3 %}
                                     <div class="aisle-gap"></div>
 
-                                {# תצורה של 9 מושבים (תיירים רחב): 3-3-3 #}
                                 {% elif row_len == 9 and (loop.index == 3 or loop.index == 6) %}
                                     <div class="aisle-gap"></div>
 
-                                {# תצורה של 10 מושבים (A380): 3-4-3 #}
                                 {% elif row_len == 10 and (loop.index == 3 or loop.index == 7) %}
                                     <div class="aisle-gap"></div>
                                 {% endif %}

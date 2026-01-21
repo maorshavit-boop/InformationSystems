@@ -28,7 +28,7 @@ body {
 }
 
 /* =========================================
-   2. HEADER & NAV (UPDATED LAYOUT)
+   2. HEADER & NAV
    ========================================= */
 .header-container {
     display: grid;
@@ -487,7 +487,7 @@ body.signup-mode {
 }
 
 /* =========================================
-   11. MY TRIPS PAGE STYLES
+   10. MY TRIPS PAGE STYLES
    ========================================= */
 
 .trips-container {
@@ -566,7 +566,7 @@ body.signup-mode {
 .btn-cancel-sm:hover { background: var(--neon-red); color: white; }
 
 /* =========================================
-   12. FILTER BUTTONS STYLES
+   11. FILTER BUTTONS STYLES
    ========================================= */
 .filter-container {
     display: flex;
@@ -614,7 +614,7 @@ body.signup-mode {
 }
 
 /* =========================================
-   13. MANAGER DASHBOARD BUTTONS (NEW)
+   12. MANAGER DASHBOARD BUTTONS (NEW)
    ========================================= */
 
 .manager-actions {
@@ -683,7 +683,7 @@ body.signup-mode {
 }
 
 /* =========================================
-   14. CARD STYLES (New Global Cards)
+   13. CARD STYLES (New Global Cards)
    ========================================= */
 .neon-card {
     background: var(--board-bg);

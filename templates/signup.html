@@ -7,25 +7,23 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        /* --- תוספת עיצוב קטנה עבור כפתורי הטלפון --- */
+        /* --- Adding a design for the phone number button --- */
 
-        /* סידור השדה והכפתור בשורה אחת */
+        /* --- Placing the button and the field phone numbers in one line --- */
         .phone-group {
             display: flex;
             gap: 10px;
             margin-bottom: 10px;
-            align-items: center; /* מוודא שהכפתור והאינפוט מיושרים */
+            align-items: center;
         }
 
-        /* שהאינפוט יתפוס את כל המקום הפנוי */
         .phone-group input {
             flex-grow: 1;
-            margin-bottom: 0 !important; /* ביטול שוליים של האינפוט המקורי כדי שהשורה תהיה הדוקה */
+            margin-bottom: 0 !important;
         }
 
-        /* עיצוב כפתורי הפלוס והמינוס */
         .btn-icon {
-            width: 42px; /* רוחב תואם לגובה האינפוט */
+            width: 42px;
             height: 42px;
             border: none;
             border-radius: 6px;
@@ -40,13 +38,13 @@
         }
 
         .btn-add {
-            background-color: #00d4ff; /* כחול ניאון תואם לאתר */
+            background-color: #00d4ff;
             box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
         }
         .btn-add:hover { background-color: #00a3cc; }
 
         .btn-remove {
-            background-color: #ff3333; /* אדום ניאון */
+            background-color: #ff3333;
             box-shadow: 0 0 10px rgba(255, 51, 51, 0.2);
         }
         .btn-remove:hover { background-color: #cc0000; }
@@ -140,29 +138,24 @@
         function addPhoneField() {
             const container = document.getElementById('phone-container');
 
-            // יצירת ה-Div העוטף
             const div = document.createElement('div');
             div.className = 'phone-group';
 
-            // יצירת שדה האינפוט החדש
             const input = document.createElement('input');
             input.type = 'text';
-            input.name = 'phone'; // שם זהה כדי שייכנס לרשימה בשרת
+            input.name = 'phone';
             input.placeholder = 'Additional Phone';
             input.required = true;
 
-            // יצירת כפתור ההסרה
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'btn-icon btn-remove';
-            btn.textContent = '-'; // או אפשר להשתמש באייקון
+            btn.textContent = '-';
 
-            // פונקציית מחיקה
             btn.onclick = function() {
                 container.removeChild(div);
             };
 
-            // הרכבת האלמנטים
             div.appendChild(input);
             div.appendChild(btn);
             container.appendChild(div);

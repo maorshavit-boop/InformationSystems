@@ -8,7 +8,7 @@ from contextlib import contextmanager
 db_config = {
     "host": "localhost",
     "user": "root",
-    "password": "root",  # Updated to your requested password
+    "password": "root",
     "database": "FLYTAU",
     "autocommit": True
 }
@@ -18,22 +18,11 @@ db_config = {
 @contextmanager
 def db_cur():
     """
-        Context manager that establishes a database connection and yields a
-        dictionary cursor for executing SQL queries, ensuring resources are closed automatically.
-
-        Args:
-            None
-
-        Logic:
-            1. Connects to the database using mysql.connector and the global configuration.
-            2. Creates a cursor with dictionary=True so query results are returned as dictionaries.
-            3. Yields the cursor to the caller for use in a with statement.
-            4. Catches, prints, and re-raises any database errors that occur.
-            5. Finally, ensures the cursor and connection are closed, regardless of success or failure.
-
-        Returns:
-            MySQLCursorDict: A cursor object that returns query results as dictionaries.
-     """
+    Context manager that establishes a database connection and yields a
+    dictionary cursor for executing SQL queries.
+    Yields: MySQLCursorDict: A cursor object that returns query results as dictionaries.
+    Raises: mysql.connector.Error: If a database connection error occurs.
+    """
     mydb = None
     cursor = None
     try:
@@ -52,8 +41,11 @@ def db_cur():
 
 def register_new_customer(data):
     """
-    Backend logic for user signup.
-    Inserts data into Registered_Customers and Customer_Phones (supports multiple phones).
+    Backend logic for registering a new customer.
+    Inserts customer details into 'Registered_Customers' and associated phone numbers
+    into 'Customer_Phones'.
+    parm data (dict): A dictionary containing user registration details (email, names, passport, etc.).
+    Returns: tuple: (bool, str) - (True, "Success Message") or (False, "Error Message").
     """
     with db_cur() as cursor:
         try:
@@ -80,7 +72,7 @@ def register_new_customer(data):
             # Use the list we created in main.py
             phone_list = data.get('phones', [])
 
-            # If for some reason it's a string (legacy support), make it a list
+            # If for some reason it's a string, make it a list
             if isinstance(phone_list, str):
                 phone_list = [phone_list]
 
@@ -98,8 +90,15 @@ def register_new_customer(data):
 
 def get_flights_with_filters(user_type, date=None, source=None, destination=None):
     """
-returns fights by users filters
+    Retrieves a list of flights based on the user type and optional filters.
+    Managers see all flights; others see only 'Active' flights.
+    param: user_type (str): The type of user requesting the data ('Manager' or other).
+    param date (str, optional): Filter by departure date (YYYY-MM-DD).
+    param source (str, optional): Filter by source airport code.
+    param destination (str, optional): Filter by destination airport code.
+    Returns: list[dict]: A list of flight records matching the criteria.
     """
+
     with db_cur() as cursor:
         if user_type == 'Manager':
             query = "SELECT * FROM Flights WHERE 1=1"
@@ -126,8 +125,13 @@ from datetime import datetime, timedelta
 
 def get_customer_history(email, status_filter=None):
     """
-    Returns all orders for a specific user, filtered by status if provided.
+    Retrieves the order history for a specific customer, optionally filtered by status.
+    Aggregates ticket count and total price per order.
+    param email (str): The email address of the customer.
+    param status_filter (str, optional): Status to filter by ('All', 'Cancelled', etc.).
+    Returns: list[dict]: A list of orders with aggregated details.
     """
+
     with db_cur() as cursor:
         query = """
             SELECT O.order_code, 
@@ -167,9 +171,13 @@ def get_customer_history(email, status_filter=None):
 
 def get_order_by_code(order_code, email):
     """
-    Fetches the total order details and all associated tickets.
-    Returns a dictionary with 'info' (order data) and 'tickets' (list of tickets).
+    Fetches detailed information for a specific order, including general info and specific tickets.
+    param order_code (str): The unique code of the order.
+    param email (str): The email of the customer who owns the order.
+    Returns: dict: A dictionary with keys 'info' (order summary) and 'tickets' (list of tickets),
+              or None if the order is not found.
     """
+
     with db_cur() as cursor:
         query_order = """
             SELECT o.order_code, o.status, o.order_date, SUM(t.price) as total_price
@@ -202,11 +210,13 @@ def get_order_by_code(order_code, email):
 
 def cancel_order_transaction(order_code):
     """
-    Executes order cancellation:
-    1. Checks if more than 36 hours remain before the flight.
-    2. Calculates a 5% cancellation fee.
-    3. Updates the order status and ticket prices in the DB.
+    Executes an order cancellation process.
+    Validates the cancellation window (up to 36 hours before flight), calculates a 5% fee,
+    updates the order status, and adjusts ticket prices to reflect the fee.
+    param order_code (str): The code of the order to cancel.
+    Returns: tuple: (bool, str) - (True, "Success Message") or (False, "Error Message").
     """
+
     with db_cur() as cursor:
         query_check = """
             SELECT F.departure_date, F.departure_time, SUM(FT.price) as current_total
@@ -243,7 +253,12 @@ def cancel_order_transaction(order_code):
 
 
 def get_flight_details(flight_id):
-    """Retrieves basic flight info for the booking header."""
+    """
+    Retrieves basic details for a specific flight by its ID.
+    param flight_id (str): The unique identifier of the flight.
+    Returns: dict: A dictionary containing flight details, or None if not found.
+    """
+
     with db_cur() as cursor:
         query = "SELECT * FROM Flights WHERE flight_id = %s"
         cursor.execute(query, (flight_id,))
@@ -252,9 +267,12 @@ def get_flight_details(flight_id):
 
 def get_flight_seat_map(flight_id):
     """
-    Fetches seats and organizes them by ROW to fix visual grid alignment issues.
-    Returns a dictionary structure: { row_num: { col_num: seat_object } }
+    Generates a seat map for a flight, indicating occupied seats.
+    Returns the raw flight info and a structured map for frontend rendering.
+    param flight_id (str): The unique identifier of the flight.
+    Returns: tuple: (dict, dict) - Flight details and a seat map dictionary {row: {col: seat_data}}.
     """
+
     with db_cur() as cursor:
         # 1. Fetch flight info
         query_flight = """
@@ -302,9 +320,13 @@ def get_flight_seat_map(flight_id):
 
 def get_current_price(flight_id, class_type):
     """
-    Retrieves the price for a specific flight and class directly from the database.
-    Raises an error if no price is found, preventing 'free' tickets.
+    Retrieves the current ticket price for a specific flight and class type.
+    param flight_id (str): The flight identifier.
+    param class_type (str): The class (e.g., 'Economy', 'Business').
+    Returns: float: The price of the ticket.
+    Raises: ValueError: If no price is found for the specified class and flight.
     """
+
     with db_cur() as cursor:
         query = """
             SELECT cif.price 
@@ -327,11 +349,15 @@ def get_current_price(flight_id, class_type):
 # Creates a booking
 def create_booking(flight_id, selected_seats, user, guest_data=None):
     """
-    Updated to support the new schema:
-    1. Fetches price from Classes_In_Flights.
-    2. Uses departure_date as part of the primary key for Flight_Tickets.
-    3. Handles guest phone number storage.
+    Handles the creation of a new flight booking.
+    Manages user type (Registered/Guest), creates an order, and inserts tickets.
+    param flight_id (str): The flight ID being booked.
+    param selected_seats (list): List of seat strings ("row-col-class-planeID").
+    param user (UserMixin): The currently logged-in user object.
+    param guest_data (dict, optional): Details for a guest user if not logged in.
+    Returns: tuple: (bool, str, str) - (Success, Message, OrderCode).
     """
+
     with db_cur() as cursor:
         try:
             # 1. Fetch Flight Departure Date (Required for keys)
@@ -360,7 +386,6 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
                         VALUES (%s, %s, %s, %s, 'Unregistered')
                     """, (email, guest_data['first_name'], guest_data.get('middle_name'), guest_data['last_name']))
 
-                # --- FIX: Save Guest Phone Number ---
                 guest_phone = guest_data.get('phone')
                 if guest_phone:
                     # We use INSERT IGNORE because phone_num is a Primary Key.
@@ -411,7 +436,8 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
 
 class Worker:
     """
-    Base class for all employees (Pilots, Flight Attendants, Managers).
+    Base class representing a general employee/worker in the system.
+    Stores common attributes like name and address.
     """
 
     def __init__(self, first_name, middle_name, last_name, city, street, house_num, start_date):
@@ -424,18 +450,20 @@ class Worker:
         self.start_date = start_date
 
     def get_full_name(self):
+        """Returns the worker's full name, including middle name if present."""
         if self.middle_name:
             return f"{self.first_name} {self.middle_name} {self.last_name}"
         return f"{self.first_name} {self.last_name}"
 
     def get_address(self):
+        """Returns the formatted address string."""
         return f"{self.street} {self.house_num}, {self.city}"
 
 
 class Manager(Worker, UserMixin):
     """
-    Maps to 'Managers' table.
-    Inherits from UserMixin to support Flask-Login.
+    Represents a Manager user, inheriting from Worker and UserMixin for Flask-Login compatibility.
+    Includes login credentials (manager_id, password).
     """
 
     def __init__(self, manager_id, password, first_name, middle_name, last_name, city, street, house_num, start_date):
@@ -444,15 +472,14 @@ class Manager(Worker, UserMixin):
         self.password = password
         self.user_type = 'Manager'
 
-    # Returns the workers role
     def get_role(self):
+        """Returns the user role string."""
         return "Manager"
 
 
-# NEED TO CHECK WHY ID AND EMAIL!!!
 class User(UserMixin):
     """
-Class that represents unregistered user table
+    Base class representing a generic user (e.g., Guest/Unregistered).
     """
 
     def __init__(self, email, first_name, last_name, middle_name=None):
@@ -463,8 +490,8 @@ Class that represents unregistered user table
         self.middle_name = middle_name
         self.user_type = 'Guest'
 
-    # Returns full name
     def get_full_name(self):
+        """Returns the user's full name."""
         if self.middle_name:
             return f"{self.first_name} {self.middle_name} {self.last_name}"
         return f"{self.first_name} {self.last_name}"
@@ -472,7 +499,8 @@ Class that represents unregistered user table
 
 class RegisteredUser(User):
     """
-Class of registered users, inherits from user class
+    Represents a registered customer with extended details like passport and password.
+    Inherits from User.
     """
 
     def __init__(self, email, first_name, last_name, passport_num, birth_date, password, registration_date,
@@ -488,8 +516,13 @@ Class of registered users, inherits from user class
 # Helper to check Runway Availability (15 min buffer)
 def check_runway_conflict(date, time, runway):
     """
-    Checks if runway is busy (15 min buffer).
+    Validates if a runway is free for a given time window (15-minute buffer).
+    param date (str): Departure date.
+    param time (str): Departure time.
+    param runway (str): Runway number.
+    Returns: str: Conflict message if collision exists, else None.
     """
+
     with db_cur() as cursor:
         cursor.execute("""
             SELECT flight_id, departure_time FROM Flights 
@@ -506,7 +539,12 @@ def check_runway_conflict(date, time, runway):
 
 def get_available_resources(date, new_start_time, new_duration):
     """
-    Returns resources NOT conflicting with the robust overlap logic.
+    Fetches available planes, pilots, and attendants that do not have conflicting schedules
+    for the specified time window. Also handles logic for 'Long Haul' requirements.
+    param date (str): Flight date.
+    param new_start_time (str): Flight start time.
+    param new_duration (int): Flight duration in minutes.
+    Returns: tuple: (planes, pilots, attendants) - Lists of available resource records.
     """
     is_long_haul = int(new_duration) > 360
 
@@ -555,8 +593,15 @@ def get_available_resources(date, new_start_time, new_duration):
 
 def check_plane_availability(plane_id, date, new_start_time, new_duration):
     """
-    Checks if a plane is busy using robust overlap logic (same as get_available_resources).
+    Checks if a specific plane is available during the requested time window,
+    considering the duration of both the new flight and existing flights.
+    param plane_id (str): The ID of the aircraft.
+    param date (str): Flight date.
+    param new_start_time (str): Flight start time.
+    param new_duration (int): Flight duration.
+    Returns: str: Conflict message if busy, else None.
     """
+
     with db_cur() as cursor:
         cursor.execute("""
             SELECT f.flight_id, f.departure_time, r.flight_duration
@@ -581,6 +626,12 @@ def check_plane_availability(plane_id, date, new_start_time, new_duration):
 
 
 def check_flight_id_exists(flight_id):
+    """
+    Checks if a flight ID already exists in the database.
+    param flight_id (str): The flight ID to check.
+    Returns: bool: True if exists, False otherwise.
+    """
+
     with db_cur() as cursor:
         cursor.execute("SELECT flight_id FROM Flights WHERE flight_id = %s", (flight_id,))
         if cursor.fetchone():
@@ -590,8 +641,12 @@ def check_flight_id_exists(flight_id):
 
 def create_flight_final_step(form_data):
     """
-    Final Commit with FULL SAFETY CHECKS (ID, Runway, Plane).
+    Performs the final validation and insertion of a new flight.
+    Validates resources (plane, runway, crew training) and inserts data into multiple tables.
+    param form_data (dict): Dictionary containing form inputs for the new flight.
+    Returns: tuple: (bool, str) - (Success, Message).
     """
+
     f_id = form_data['flight_id']
     date = form_data['departure_date']
     time = form_data['departure_time']
@@ -625,7 +680,7 @@ def create_flight_final_step(form_data):
     if plane_conflict:
         return False, f"CRITICAL: {plane_conflict}"
 
-    # --- 3. INSERT DATA ---
+    # 3. INSERT DATA
     with db_cur() as cursor:
         try:
             # Insert Flight
@@ -663,8 +718,13 @@ def create_flight_final_step(form_data):
 
 def create_new_route(source, dest, duration):
     """
-    Adds a new flight route to the database if it doesn't exist.
+    Inserts a new flight route into the 'Flight_Routes' table if it doesn't already exist.
+    param source (str): Source airport code.
+    param dest (str): Destination airport code.
+    param duration (int): Flight duration in minutes.
+    Returns: tuple: (bool, str) - (Success, Message).
     """
+
     # Basic validation
     if source.strip().upper() == dest.strip().upper():
         return False, "Source and Destination cannot be the same."
@@ -697,7 +757,10 @@ def create_new_route(source, dest, duration):
 
 def get_user_by_id(user_id):
     """
-  Returns registered user or manager with given user id.
+    Factory function to retrieve a user object (RegisteredUser or Manager) by ID.
+    Used by Flask-Login for user loading.
+    param user_id (str): The unique ID of the user (email for customers, manager_id for managers).
+    Returns: UserMixin: An instance of RegisteredUser or Manager, or None if not found.
     """
     with db_cur() as cursor:
         cursor.execute("SELECT * FROM Registered_Customers WHERE email = %s", (user_id,))
@@ -735,8 +798,12 @@ def get_user_by_id(user_id):
 
 def add_new_worker(data):
     """
-    Adds a new Pilot or Flight Attendant to the database with ALL details.
+    Adds a new worker (Pilot or Flight Attendant) to the database.
+    Generates a new unique ID and inserts the worker's details.
+    param data (dict): Dictionary containing worker details (role, names, address, training).
+    Returns: tuple: (bool, str) - (Success, Message).
     """
+
     role = data.get('role')  # 'Pilot' or 'Attendant'
 
     # ID Generation
