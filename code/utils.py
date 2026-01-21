@@ -6,10 +6,10 @@ from contextlib import contextmanager
 
 # Configuration for database connection
 db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "root",
-    "database": "FLYTAU",
+    "host": "maorshavit10.mysql.pythonanywhere-services.com",
+    "user": "maorshavit10",
+    "password": "FlyTau2026",
+    "database": "maorshavit10$FLYTAU",
     "autocommit": True
 }
 
