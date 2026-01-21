@@ -43,8 +43,9 @@ def homepage():
     date = request.args.get('date')
     source = request.args.get('source')
     dest = request.args.get('dest')
+    status_filter = request.args.get('status')
 
-    flights = get_flights_with_filters(u_type, date, source, dest)
+    flights = get_flights_with_filters(u_type, date, source, dest, status_filter)
     return render_template('homepage.html', flights=flights)
 
 

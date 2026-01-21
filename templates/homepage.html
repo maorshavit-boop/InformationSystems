@@ -123,6 +123,20 @@
                 <span class="label">DATE</span>
                 <input type="date" name="date" value="{{ request.args.get('date', '') }}">
             </div>
+
+            {% if current_user.is_authenticated and current_user.user_type == 'Manager' %}
+            <div class="search-input">
+                <span class="label">STATUS</span>
+                <select name="status" style="background: transparent; border: none; border-bottom: 2px solid #444; color: white; font-family: 'Share Tech Mono', monospace; width: 140px; text-transform: uppercase; cursor: pointer;">
+                    <option value="All" style="background-color: #1a1d24; color: white;" {% if request.args.get('status') == 'All' %}selected{% endif %}>ALL STATUSES</option>
+                    <option value="Active" style="background-color: #1a1d24; color: white;" {% if request.args.get('status') == 'Active' %}selected{% endif %}>Active</option>
+                    <option value="Full Capacity" style="background-color: #1a1d24; color: white;" {% if request.args.get('status') == 'Full Capacity' %}selected{% endif %}>Full Capacity</option>
+                    <option value="Arrived" style="background-color: #1a1d24; color: white;" {% if request.args.get('status') == 'Arrived' %}selected{% endif %}>Arrived</option>
+                    <option value="Cancelled" style="background-color: #1a1d24; color: white;" {% if request.args.get('status') == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            {% endif %}
+
             <button type="submit" class="search-btn">SCAN FLIGHTS</button>
         </form>
     </section>

@@ -88,7 +88,7 @@ def register_new_customer(data):
             return False, "An error occurred during registration."
 
 
-def get_flights_with_filters(user_type, date=None, source=None, destination=None):
+def get_flights_with_filters(user_type, date=None, source=None, destination=None, status=None):
     """
     Retrieves a list of flights based on the user type and optional filters.
     Managers see all flights; others see only 'Active' flights.
@@ -100,12 +100,18 @@ def get_flights_with_filters(user_type, date=None, source=None, destination=None
     """
 
     with db_cur() as cursor:
+        params = []
+
         if user_type == 'Manager':
             query = "SELECT * FROM Flights WHERE 1=1"
+
+            if status and status != 'All':
+                query += " AND status = %s"
+                params.append(status)
+
         else:
             query = "SELECT * FROM Flights WHERE status = 'Active'"
 
-        params = []
         if date:
             query += " AND departure_date = %s"
             params.append(date)
@@ -116,7 +122,7 @@ def get_flights_with_filters(user_type, date=None, source=None, destination=None
             query += " AND destination_airport = %s"
             params.append(destination)
 
-        cursor.execute(query, params)
+        cursor.execute(query, tuple(params))
         return cursor.fetchall()
 
 
