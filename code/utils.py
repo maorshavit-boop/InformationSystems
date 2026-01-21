@@ -49,10 +49,15 @@ def register_new_customer(data):
     """
     with db_cur() as cursor:
         try:
-            # Check if email exists
+            # Check if email exists in Registered Customers
             cursor.execute("SELECT email FROM Registered_Customers WHERE email = %s", (data['email'],))
             if cursor.fetchone():
                 return False, "Email already registered."
+
+            # [NEW] SECURITY CHECK: Check if email exists in Managers
+            cursor.execute("SELECT manager_id FROM Managers WHERE email = %s", (data['email'],))
+            if cursor.fetchone():
+                return False, "Managers are not allowed to register as customers."
 
             # Insert User Basic Info
             insert_cust = """
@@ -68,16 +73,11 @@ def register_new_customer(data):
 
             # Insert Multiple Phones
             insert_phone = "INSERT INTO Customer_Phones (phone_num, email, customer_type) VALUES (%s, %s, 'Registered')"
-
-            # Use the list we created in main.py
             phone_list = data.get('phones', [])
-
-            # If for some reason it's a string, make it a list
             if isinstance(phone_list, str):
                 phone_list = [phone_list]
 
             for phone in phone_list:
-                # Basic validation to ensure empty inputs aren't saved
                 if phone and phone.strip():
                     cursor.execute(insert_phone, (phone.strip(), data['email']))
 
@@ -372,10 +372,16 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
 
             # 3. Handle Customer
             if user.is_authenticated:
+                if getattr(user, 'user_type', '') == 'Manager':
+                    return False, "Managers cannot book flights!", None
                 email = user.id
                 customer_type = 'Registered'
             else:
                 email = guest_data['email']
+                # security check: Is this email a Manager's email?
+                cursor.execute("SELECT manager_id FROM Managers WHERE email = %s", (email,))
+                if cursor.fetchone():
+                    return False, "Corruption Alert: Managers are forbidden from booking tickets (even as guests).", None
                 customer_type = 'Unregistered'
 
                 # Check if guest exists, if not create them
@@ -412,7 +418,7 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
 
                 # Verify Price exists (Validation step)
                 cursor.execute("""
-                    SELECT price FROM Classes_In_Flights 
+                    SELECT price FROM Classes_In_Flights
                     WHERE flight_id = %s AND departure_date = %s AND class_type = %s AND airplane_id = %s
                 """, (flight_id, departure_date, s_class, airplane_id))
 

@@ -40,7 +40,8 @@ CREATE TABLE Managers (
     city VARCHAR(50),
     street VARCHAR(50),
     house_num VARCHAR(10),
-    start_date DATE
+    start_date DATE,
+    email VARCHAR(100) UNIQUE
 );
 
 -- 4. Pilot Phones table

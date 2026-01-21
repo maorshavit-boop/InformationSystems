@@ -121,11 +121,11 @@ DROP TABLE NumberGen;
 -- ==========================================================
 
 INSERT INTO Managers VALUES
-('M-001', 'pass1', 'שרה', 'א', 'כהן', 'Tel Aviv', 'Azrieli', '1', '2015-01-01'),
-('M-002', 'pass2', 'תומר', 'ב', 'לוי', 'Herzliya', 'Pituach', '2', '2016-06-15'),
-('M-003', 'pass3', 'ברוך', 'ג', 'וינשטיין', 'Jerusalem', 'Main', '3', '2018-01-01'),
-('M-004', 'pass4', 'קלרק', 'ד', 'קנט', 'Haifa', 'Sea', '4', '2019-01-01'),
-('M-005', 'pass5', 'דיאנה', 'ה', 'פרינס', 'Eilat', 'Sun', '5', '2020-01-01');
+('M-001', 'pass1', 'שרה', 'א', 'כהן', 'Tel Aviv', 'Azrieli', '1', '2015-01-01', 'sara@flytau.com'),
+('M-002', 'pass2', 'תומר', 'ב', 'לוי', 'Herzliya', 'Pituach', '2', '2016-06-15', 'tomer@flytau.com'),
+('M-003', 'pass3', 'ברוך', 'ג', 'וינשטיין', 'Jerusalem', 'Main', '3', '2018-01-01', 'baruch@flytau.com'),
+('M-004', 'pass4', 'קלרק', 'ד', 'קנט', 'Haifa', 'Sea', '4', '2019-01-01', 'clark@flytau.com'),
+('M-005', 'pass5', 'דיאנה', 'ה', 'פרינס', 'Eilat', 'Sun', '5', '2020-01-01', 'diana@flytau.com');
 
 INSERT INTO Pilots VALUES
 ('P-001', 'מוטי', 'מ', 'מזרחי', 'Tel Aviv', 'A', '1', '2010-01-01', TRUE),
