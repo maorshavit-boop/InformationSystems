@@ -95,7 +95,7 @@ FLYTAU/
 │   ├── reports.html       # Manager Analytics  
 │   ├── add_flight.html    # Manager Wizard  
 │   └── ... (other HTML templates)  
-└── requirements.txt       # Dependencies for the project  
+├── requirements.txt       # Dependencies for the project  
 └── README.md              # This file  
 
 ## 📸 Screenshots
