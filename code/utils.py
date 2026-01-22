@@ -681,6 +681,24 @@ def create_flight_final_step(form_data):
             return False, "Error: Route not found."
         duration = route_res['flight_duration']
 
+        cursor.execute("SELECT size FROM Airplanes WHERE airplane_id=%s", (plane_id,))
+        p_res = cursor.fetchone()
+        if not p_res: return False, "Plane not found."
+        plane_size = p_res['size']
+
+
+    if plane_size == 'Big':
+        req_pilots = 3
+        req_attendants = 6
+    else:
+        req_pilots = 2
+        req_attendants = 3
+
+    if len(pilot_ids) != req_pilots:
+        return False, f"Crew mismatch: {plane_size} plane requires {req_pilots} Pilots (you selected {len(pilot_ids)})."
+    if len(attendant_ids) != req_attendants:
+        return False, f"Crew mismatch: {plane_size} plane requires {req_attendants} Attendants (you selected {len(attendant_ids)})."
+
     # 2. RUN FINAL SAFETY CHECKS (Race Conditions)
     if check_flight_id_exists(f_id):
         return False, f"CRITICAL: Flight ID {f_id} was taken by another manager just now."
@@ -726,7 +744,6 @@ def create_flight_final_step(form_data):
             return True, "Flight Created Successfully!"
         except Exception as e:
             return False, str(e)
-
 
 def create_new_route(source, dest, duration):
     """
