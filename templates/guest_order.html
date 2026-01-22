@@ -6,29 +6,21 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
     <header class="header-container">
         <div class="header-left-nav">
             <a href="{{ url_for('guest_manage') }}" class="nav-link-orange"> < BACK TO SEARCH </a>
         </div>
-
-        <div class="header-center">
-            <span class="welcome-text-large">FLIGHT MANIFEST</span>
-        </div>
-
+        <div class="header-center"><span class="welcome-text-large">FLIGHT MANIFEST</span></div>
         <div class="header-right-logo">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="100" class="dimmed-logo">
         </div>
     </header>
 
     <main class="trips-container">
-
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="flash-message {{ category }}" style="display:block; text-align:center; margin-bottom:20px;">
-                        {{ message }}
-                    </div>
+                    <div class="flash-message {{ category }}" style="display:block; text-align:center; margin-bottom:20px;">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
@@ -36,12 +28,13 @@
         <div style="background: var(--board-bg); border: 1px solid #333; padding: 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
             <div>
                 <div style="color: var(--text-muted); font-size: 0.9em; font-family: 'Share Tech Mono', monospace; letter-spacing: 1px;">ORDER REFERENCE</div>
-                <div style="font-size: 2em; color: var(--neon-orange); font-family: 'Share Tech Mono', monospace; font-weight: bold;">
-                    #{{ order.info.order_code }}
+                <div style="font-size: 2em; color: var(--neon-orange); font-family: 'Share Tech Mono', monospace; font-weight: bold;">#{{ order.info.order_code }}</div>
+
+                <div style="margin-top: 10px; border-top: 1px dashed #444; padding-top: 8px;">
+                     <span style="color: #888; font-size: 0.85em;">SEATS:</span>
+                     <span style="color: var(--neon-yellow); font-family: 'Share Tech Mono'; font-weight: bold;">{{ order.info.seats }}</span>
                 </div>
-                <div style="color: #666; font-size: 0.85em; margin-top: 5px;">
-                    Date: {{ order.info.order_date }}
-                </div>
+                <div style="color: #666; font-size: 0.85em; margin-top: 5px;">Date: {{ order.info.order_date }}</div>
             </div>
 
             <div style="text-align: right;">
@@ -50,10 +43,7 @@
                     {% set status_class = 'status-active' %}
                     {% if 'Cancel' in status %}{% set status_class = 'status-cancelled' %}
                     {% elif status == 'Executed' %}{% set status_class = 'status-executed' %}{% endif %}
-
-                    <span class="status-badge {{ status_class }}" style="font-size: 1em; padding: 8px 20px;">
-                        {{ status }}
-                    </span>
+                    <span class="status-badge {{ status_class }}" style="font-size: 1em; padding: 8px 20px;">{{ status }}</span>
                 </div>
 
                 {% if status == 'Active' %}
@@ -61,17 +51,13 @@
                     <input type="hidden" name="action" value="cancel">
                     <input type="hidden" name="order_code" value="{{ order.info.order_code }}">
                     <input type="hidden" name="email" value="{{ email }}">
-                    <button type="submit" class="btn-cancel-sm" style="padding: 8px 20px; font-size: 0.9em;">
-                        CANCEL BOOKING
-                    </button>
+                    <button type="submit" class="btn-cancel-sm" style="padding: 8px 20px; font-size: 0.9em;">CANCEL BOOKING</button>
                 </form>
                 {% endif %}
             </div>
         </div>
 
-        <h3 style="font-family: 'Share Tech Mono'; color: var(--text-white); border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
-            ISSUED TICKETS
-        </h3>
+        <h3 style="font-family: 'Share Tech Mono'; color: var(--text-white); border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">ISSUED TICKETS</h3>
 
         <table class="styled-table">
             <thead>
@@ -87,36 +73,19 @@
             <tbody>
                 {% for ticket in order.tickets %}
                 <tr class="trip-row">
-                    <td style="color: var(--neon-yellow); font-family: 'Share Tech Mono'; font-weight: bold;">
-                        {{ ticket.flight_id }}
-                    </td>
-
-                    <td>
-                        <span class="route-badge">
-                            {{ ticket.source_airport }} ➝ {{ ticket.destination_airport }}
-                        </span>
-                    </td>
-
+                    <td style="color: var(--neon-yellow); font-family: 'Share Tech Mono'; font-weight: bold;">{{ ticket.flight_id }}</td>
+                    <td><span class="route-badge">{{ ticket.source_airport }} ➝ {{ ticket.destination_airport }}</span></td>
                     <td>
                         <div style="color: #e0e0e0;">{{ ticket.departure_date }}</div>
-                        <div style="color: var(--neon-yellow); font-family: 'Share Tech Mono'; font-size: 0.9em;">
-                            {{ ticket.departure_time }}
-                        </div>
+                        <div style="color: var(--neon-yellow); font-family: 'Share Tech Mono'; font-size: 0.9em;">{{ ticket.departure_time }}</div>
                     </td>
-
                     <td style="font-size: 1.1em; font-weight: bold; color: white;">
                         {{ ticket.row_num }}{{ ticket.column_num|map_to_letter }}
                     </td>
-
                     <td>
-                        <span style="color: {{ '#00d4ff' if ticket.class_type == 'Business' else '#888' }}; text-transform: uppercase; font-size: 0.9em; font-weight: bold;">
-                            {{ ticket.class_type }}
-                        </span>
+                        <span style="color: {{ '#00d4ff' if ticket.class_type == 'Business' else '#888' }}; text-transform: uppercase; font-size: 0.9em; font-weight: bold;">{{ ticket.class_type }}</span>
                     </td>
-
-                    <td class="price-tag">
-                        ${{ ticket.price }}
-                    </td>
+                    <td class="price-tag">${{ ticket.price }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -124,18 +93,8 @@
 
         <div style="margin-top: 30px; text-align: right; border-top: 1px solid #333; padding-top: 20px;">
             <span style="color: var(--text-muted); font-size: 1.2em; margin-right: 15px;">TOTAL PAID:</span>
-
-            {% if 'Cancel' in order.info.status %}
-                <span style="font-size: 2.5em; color: var(--neon-red); font-family: 'Share Tech Mono', monospace; font-weight: bold;">
-                    ${{ order.info.total_price }}
-                </span>
-            {% else %}
-                <span style="font-size: 2.5em; color: var(--neon-green); font-family: 'Share Tech Mono', monospace; font-weight: bold;">
-                    ${{ order.info.total_price }}
-                </span>
-            {% endif %}
+            <span style="font-size: 2.5em; color: {{ 'var(--neon-red)' if 'Cancel' in order.info.status else 'var(--neon-green)' }}; font-family: 'Share Tech Mono', monospace; font-weight: bold;">${{ order.info.total_price }}</span>
         </div>
-
     </main>
 </body>
 </html>

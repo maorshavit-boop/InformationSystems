@@ -39,23 +39,11 @@
 
         <div class="filter-container">
             <span class="filter-label">FILTER STATUS:</span>
-
             {% set current_filter = request.args.get('status', 'All') %}
-
-            <a href="{{ url_for('my_trips', status='All') }}"
-               class="filter-btn {{ 'active' if current_filter == 'All' else '' }}">ALL</a>
-
-            <a href="{{ url_for('my_trips', status='Active') }}"
-               class="filter-btn {{ 'active' if current_filter == 'Active' else '' }}">ACTIVE</a>
-
-            <a href="{{ url_for('my_trips', status='Executed') }}"
-               class="filter-btn {{ 'active' if current_filter == 'Executed' else '' }}">COMPLETED</a>
-
-            <a href="{{ url_for('my_trips', status='Cancelled by customer') }}"
-               class="filter-btn {{ 'active' if current_filter == 'Cancelled by customer' else '' }}">CANCELLED BY COSTUMER</a>
-
-            <a href="{{ url_for('my_trips', status='Cancelled by system') }}"
-               class="filter-btn {{ 'active' if current_filter == 'Cancelled by system' else '' }}">CANCELLED BY COMPANY</a>
+            <a href="{{ url_for('my_trips', status='All') }}" class="filter-btn {{ 'active' if current_filter == 'All' else '' }}">ALL</a>
+            <a href="{{ url_for('my_trips', status='Active') }}" class="filter-btn {{ 'active' if current_filter == 'Active' else '' }}">ACTIVE</a>
+            <a href="{{ url_for('my_trips', status='Executed') }}" class="filter-btn {{ 'active' if current_filter == 'Executed' else '' }}">COMPLETED</a>
+            <a href="{{ url_for('my_trips', status='Cancelled by customer') }}" class="filter-btn {{ 'active' if current_filter == 'Cancelled by customer' else '' }}">CANCELLED BY CUSTOMER</a>
         </div>
 
         {% if orders %}
@@ -65,6 +53,7 @@
                     <th>Order Ref</th>
                     <th>Route</th>
                     <th>Date & Time</th>
+                    <th>Seats (Row/Let)</th>
                     <th>Price</th>
                     <th>Status</th>
                     <th>Action</th>
@@ -74,41 +63,33 @@
                 {% for order in orders %}
                 <tr class="trip-row">
                     <td><span class="order-id">{{ order.order_code }}</span></td>
-
                     <td>
-                        <span class="route-badge">
-                            {{ order.source_airport }} ➝ {{ order.destination_airport }}
-                        </span>
+                        <span class="route-badge">{{ order.source_airport }} ➝ {{ order.destination_airport }}</span>
                         <div style="font-size: 0.8em; color: #777; margin-top: 5px;">Flight {{ order.flight_id }}</div>
                     </td>
-
                     <td style="color: #e0e0e0;">
-                        {{ order.departure_date }}
-                        <br>
+                        {{ order.departure_date }}<br>
                         <span style="color: var(--neon-yellow); font-family: monospace;">{{ order.departure_time }}</span>
                     </td>
-
+                    <td>
+                        <span style="color: var(--neon-yellow); font-family: 'Share Tech Mono'; font-weight: bold;">
+                            {{ order.seats }}
+                        </span>
+                        <div style="font-size:0.75em; color:#666;">({{ order.ticket_count }} Tix)</div>
+                    </td>
                     <td>
                         {% if 'Cancel' in order.status %}
-                            <span class="price-tag" style="text-decoration: line-through; color: var(--neon-red);">
-                                ${{ order.total_price }}
-                            </span>
+                            <span class="price-tag" style="text-decoration: line-through; color: var(--neon-red);">${{ order.total_price }}</span>
                         {% else %}
                             <span class="price-tag">${{ order.total_price }}</span>
                         {% endif %}
                     </td>
-
                     <td>
                         {% set status_class = 'status-active' %}
-                        {% if 'Cancel' in order.status %}
-                            {% set status_class = 'status-cancelled' %}
-                        {% elif order.status == 'Executed' or order.status == 'Arrived' %}
-                            {% set status_class = 'status-executed' %}
-                        {% endif %}
-
+                        {% if 'Cancel' in order.status %}{% set status_class = 'status-cancelled' %}
+                        {% elif order.status == 'Executed' or order.status == 'Arrived' %}{% set status_class = 'status-executed' %}{% endif %}
                         <span class="status-badge {{ status_class }}">{{ order.status }}</span>
                     </td>
-
                     <td>
                         {% if order.status == 'Active' %}
                             <form action="{{ url_for('cancel_order', order_code=order.order_code) }}" method="POST" onsubmit="return confirm('Cancel this trip? 5% cancellation fee applies.');">
@@ -125,12 +106,9 @@
         {% else %}
             <div style="text-align: center; padding: 50px; background: #1a1d24; border-radius: 10px; border: 1px dashed #444; margin-top: 20px;">
                 <h3 style="color: #888; font-family: 'Share Tech Mono', monospace;">NO FLIGHT RECORDS FOUND</h3>
-                <p style="color: #666; font-size: 0.9em;">No trips match the current filter.</p>
                 <a href="/" class="search-btn" style="text-decoration: none; display: inline-block; margin-top: 20px;">BOOK A FLIGHT</a>
             </div>
         {% endif %}
-
     </main>
-
 </body>
 </html>

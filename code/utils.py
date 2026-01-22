@@ -3,9 +3,9 @@ import string
 from flask_login import UserMixin
 import mysql.connector
 from contextlib import contextmanager
-
+"""
 # Configuration for database connection locally
-"""db_config = {
+db_config = {
     "host": "localhost",
     "user": "root",
     "password": "root",
@@ -50,52 +50,58 @@ def db_cur():
 
 def register_new_customer(data):
     """
-    Backend logic for registering a new customer.
-    Inserts customer details into 'Registered_Customers' and associated phone numbers
-    into 'Customer_Phones'.
-    parm data (dict): A dictionary containing user registration details (email, names, passport, etc.).
-    Returns: tuple: (bool, str) - (True, "Success Message") or (False, "Error Message").
+    Registers a new customer using the 'data' dictionary from main.py.
+    FIX: Added try-except to handle Duplicate Entry errors (Email/Passport) prevents crashing.
     """
     with db_cur() as cursor:
         try:
-            # Check if email exists in Registered Customers
+            # 1. Validation: Check if email exists
             cursor.execute("SELECT email FROM Registered_Customers WHERE email = %s", (data['email'],))
             if cursor.fetchone():
                 return False, "Email already registered."
 
-            # [NEW] SECURITY CHECK: Check if email exists in Managers
             cursor.execute("SELECT manager_id FROM Managers WHERE email = %s", (data['email'],))
             if cursor.fetchone():
-                return False, "Managers are not allowed to register as customers."
+                return False, "Manager email cannot be used for customer account."
 
-            # Insert User Basic Info
+            # 2. Insert Customer (Basic Info)
             insert_cust = """
                 INSERT INTO Registered_Customers 
                 (email, first_name, middle_name, last_name, passport_num, registration_date, birth_date, password, customer_type)
                 VALUES (%s, %s, %s, %s, %s, CURDATE(), %s, %s, 'Registered')
             """
             cursor.execute(insert_cust, (
-                data['email'], data['first_name'], data.get('middle_name'),
-                data['last_name'], data['passport_num'], data['birth_date'],
+                data['email'],
+                data['first_name'],
+                data.get('middle_name'),
+                data['last_name'],
+                data['passport_num'],
+                data['birth_date'],
                 data['password']
             ))
 
-            # Insert Multiple Phones
-            insert_phone = "INSERT INTO Customer_Phones (phone_num, email, customer_type) VALUES (%s, %s, 'Registered')"
+            # 3. Insert Phones (Robust Handling)
+            # FIX: Use INSERT IGNORE to prevent crash if phone number is already taken by another user
+            insert_phone = "INSERT IGNORE INTO Customer_Phones (phone_num, email, customer_type) VALUES (%s, %s, 'Registered')"
+
             phone_list = data.get('phones', [])
-            if isinstance(phone_list, str):
+            if not isinstance(phone_list, list):
                 phone_list = [phone_list]
 
             for phone in phone_list:
-                if phone and phone.strip():
-                    cursor.execute(insert_phone, (phone.strip(), data['email']))
+                if phone and str(phone).strip():
+                    cursor.execute(insert_phone, (str(phone).strip(), data['email']))
 
             return True, "Account created successfully!"
 
+        except mysql.connector.Error as err:
+            if err.errno == 1062:  # Duplicate entry code
+                return False, "Registration failed: Email or Passport already exists."
+            print(f"DB Error in signup: {err}")  # Print to console for debugging
+            return False, "Database error during registration."
         except Exception as e:
-            print(f"Signup error: {e}")
-            return False, "An error occurred during registration."
-
+            print(f"General Error in signup: {e}")
+            return False, f"System error: {str(e)}"
 
 def get_flights_with_filters(user_type, date=None, source=None, destination=None, status=None):
     """
@@ -137,65 +143,19 @@ def get_flights_with_filters(user_type, date=None, source=None, destination=None
 
 from datetime import datetime, timedelta
 
-
-def get_customer_history(email, status_filter=None):
-    """
-    Retrieves the order history for a specific customer, optionally filtered by status.
-    Aggregates ticket count and total price per order.
-    param email (str): The email address of the customer.
-    param status_filter (str, optional): Status to filter by ('All', 'Cancelled', etc.).
-    Returns: list[dict]: A list of orders with aggregated details.
-    """
-
-    with db_cur() as cursor:
-        query = """
-            SELECT O.order_code, 
-                   O.status, 
-                   O.order_date, 
-                   F.flight_id,
-                   F.source_airport,
-                   F.destination_airport, 
-                   F.departure_date, 
-                   F.departure_time,
-                   COALESCE(SUM(FT.price),0) as total_price, 
-                   COUNT(FT.row_num) as ticket_count
-            FROM Orders O
-            JOIN Flight_Tickets FT ON O.order_code = FT.order_code
-            JOIN Flights F ON FT.flight_id = F.flight_id
-            WHERE O.customer_email = %s 
-        """
-        params = [email]
-
-        # Add Status Filter Logic
-        if status_filter and status_filter != 'All':
-            if status_filter == 'Cancelled':
-                query += " AND O.status LIKE 'Cancelled%'"  # Covers both 'Cancelled by system/customer'
-            else:
-                query += " AND O.status = %s"
-                params.append(status_filter)
-
-        query += """
-            GROUP BY O.order_code, O.status, O.order_date, F.flight_id, 
-                     F.source_airport, F.destination_airport, F.departure_date, F.departure_time
-            ORDER BY O.order_date DESC
-        """
-
-        cursor.execute(query, tuple(params))
-        return cursor.fetchall()
-
-
 def get_order_by_code(order_code, email):
     """
-    Fetches detailed information for a specific order, including general info and specific tickets.
-    param order_code (str): The unique code of the order.
-    param email (str): The email of the customer who owns the order.
-    Returns: dict: A dictionary with keys 'info' (order summary) and 'tickets' (list of tickets),
-              or None if the order is not found.
+    Fetches detailed information for a specific order.
+    FIX: Uses ELT() for seat letters in the summary string.
     """
-
     with db_cur() as cursor:
+        # Fetch Info + Seat String (Formatted as 3A, 3B...)
         query_order = """
-            SELECT o.order_code, o.status, o.order_date, SUM(t.price) as total_price
+            SELECT o.order_code, o.status, o.order_date, SUM(t.price) as total_price,
+                   GROUP_CONCAT(
+                       CONCAT(t.row_num, ELT(t.column_num, 'A','B','C','D','E','F','G','H','I','J')) 
+                       SEPARATOR ', '
+                   ) as seats
             FROM Orders o
             JOIN Flight_Tickets t ON o.order_code = t.order_code
             WHERE o.order_code = %s AND o.customer_email = %s
@@ -207,6 +167,7 @@ def get_order_by_code(order_code, email):
         if not order_info:
             return None
 
+        # Fetch Tickets Details
         query_tickets = """
             SELECT t.flight_id, t.row_num, t.column_num, t.class_type, t.price,
                    f.departure_date, f.departure_time, f.source_airport, f.destination_airport
@@ -222,6 +183,52 @@ def get_order_by_code(order_code, email):
             'tickets': tickets
         }
 
+
+def get_customer_history(email, status_filter=None):
+    """
+    Retrieves the order history for a specific customer.
+    FIX: Uses ELT() to convert column numbers to letters (e.g., '3A') directly in SQL.
+    """
+    with db_cur() as cursor:
+        query = """
+            SELECT O.order_code, 
+                   O.status, 
+                   O.order_date, 
+                   F.flight_id,
+                   F.source_airport,
+                   F.destination_airport, 
+                   F.departure_date, 
+                   F.departure_time,
+                   COALESCE(SUM(FT.price),0) as total_price, 
+                   COUNT(FT.row_num) as ticket_count,
+
+                   -- FIX: Convert Column Num to Letter (1->A, 2->B...)
+                   GROUP_CONCAT(
+                       CONCAT(FT.row_num, ELT(FT.column_num, 'A','B','C','D','E','F','G','H','I','J')) 
+                       SEPARATOR ', '
+                   ) as seats
+
+            FROM Orders O
+            JOIN Flight_Tickets FT ON O.order_code = FT.order_code
+            JOIN Flights F ON FT.flight_id = F.flight_id
+            WHERE O.customer_email = %s 
+        """
+        params = [email]
+
+        if status_filter and status_filter != 'All':
+            if status_filter == 'Cancelled':
+                query += " AND O.status LIKE 'Cancelled%'"
+            else:
+                query += " AND O.status = %s"
+                params.append(status_filter)
+
+        query += """
+            GROUP BY O.order_code, O.status, O.order_date, F.flight_id, 
+                     F.source_airport, F.destination_airport, F.departure_date, F.departure_time
+            ORDER BY O.order_date DESC
+        """
+        cursor.execute(query, tuple(params))
+        return cursor.fetchall()
 
 def cancel_order_transaction(order_code):
     """
@@ -283,11 +290,10 @@ def get_flight_details(flight_id):
 def get_flight_seat_map(flight_id):
     """
     Generates a seat map for a flight, indicating occupied seats.
-    Returns the raw flight info and a structured map for frontend rendering.
+    Only seats belonging to 'Active' orders are marked as taken.
     param flight_id (str): The unique identifier of the flight.
     Returns: tuple: (dict, dict) - Flight details and a seat map dictionary {row: {col: seat_data}}.
     """
-
     with db_cur() as cursor:
         # 1. Fetch flight info
         query_flight = """
@@ -300,10 +306,13 @@ def get_flight_seat_map(flight_id):
         flight = cursor.fetchone()
         if not flight: return None, {}
 
-        # 2. Fetch all seats + Occupancy status
+        # 2. Fetch seats. FIX: Join with Orders to check status!
         query_seats = """
             SELECT s.row_num, s.column_num, s.class_type, s.airplane_id,
-                   CASE WHEN t.order_code IS NOT NULL THEN 1 ELSE 0 END AS is_taken
+                   CASE 
+                       WHEN t.order_code IS NOT NULL AND o.status = 'Active' THEN 1 
+                       ELSE 0 
+                   END AS is_taken
             FROM Seats s
             LEFT JOIN Flight_Tickets t 
                 ON s.row_num = t.row_num 
@@ -311,17 +320,16 @@ def get_flight_seat_map(flight_id):
                 AND s.airplane_id = t.airplane_id
                 AND t.flight_id = %s
                 AND t.departure_date = %s
+            LEFT JOIN Orders o ON t.order_code = o.order_code
             WHERE s.airplane_id = %s
             ORDER BY s.row_num, s.column_num
         """
         cursor.execute(query_seats, (flight_id, flight['departure_date'], flight['airplane_id']))
         raw_seats = cursor.fetchall()
 
-        # 3. Reorganize into a structured map: rows[row_num][col_num] = seat
-        # This allows the HTML to iterate 1-6 explicitly and handle gaps.
+        # 3. Reorganize map
         seat_map = {}
         max_row = 0
-
         for seat in raw_seats:
             r = seat['row_num']
             c = seat['column_num']
@@ -331,7 +339,6 @@ def get_flight_seat_map(flight_id):
             if r > max_row: max_row = r
 
         return flight, {'map': seat_map, 'max_row': max_row}
-
 
 def get_current_price(flight_id, class_type):
     """
@@ -361,21 +368,17 @@ def get_current_price(flight_id, class_type):
             f"CRITICAL: No price set for Flight {flight_id} in {class_type} class. Please choose a different ticket")
 
 
-# Creates a booking
 def create_booking(flight_id, selected_seats, user, guest_data=None):
     """
-    Handles the creation of a new flight booking.
-    Manages user type (Registered/Guest), creates an order, and inserts tickets.
-    param flight_id (str): The flight ID being booked.
-    param selected_seats (list): List of seat strings ("row-col-class-planeID").
-    param user (UserMixin): The currently logged-in user object.
-    param guest_data (dict, optional): Details for a guest user if not logged in.
-    Returns: tuple: (bool, str, str) - (Success, Message, OrderCode).
+    Handles booking creation.
+    FIX: Improved error handling and Guest creation logic.
     """
+
+    import random, string
 
     with db_cur() as cursor:
         try:
-            # 1. Fetch Flight Departure Date (Required for keys)
+            # 1. Validate Flight
             cursor.execute("SELECT departure_date FROM Flights WHERE flight_id = %s", (flight_id,))
             res = cursor.fetchone()
             if not res:
@@ -385,74 +388,83 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
             # 2. Generate Order Code
             order_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
-            # 3. Handle Customer
+            # 3. Determine User & Handle Guest Logic
             if user.is_authenticated:
                 if getattr(user, 'user_type', '') == 'Manager':
                     return False, "Managers cannot book flights!", None
                 email = user.id
                 customer_type = 'Registered'
             else:
+                # Guest Logic
+                if not guest_data: return False, "Missing guest details", None
                 email = guest_data['email']
-                # security check: Is this email a Manager's email?
+
+                # Security: Check if this email is a Manager
                 cursor.execute("SELECT manager_id FROM Managers WHERE email = %s", (email,))
                 if cursor.fetchone():
-                    return False, "Corruption Alert: Managers are forbidden from booking tickets (even as guests).", None
+                    return False, "Managers cannot book as guests.", None
+
                 customer_type = 'Unregistered'
 
-                # Check if guest exists, if not create them
-                cursor.execute("SELECT email FROM Unregistered_Customers WHERE email = %s", (email,))
-                if not cursor.fetchone():
-                    cursor.execute("""
-                        INSERT INTO Unregistered_Customers (email, first_name, middle_name, last_name, customer_type)
+                # FIX: Insert Guest if not exists (IGNORE duplicates)
+                cursor.execute("""
+                        INSERT IGNORE INTO Unregistered_Customers (email, first_name, middle_name, last_name, customer_type)
                         VALUES (%s, %s, %s, %s, 'Unregistered')
                     """, (email, guest_data['first_name'], guest_data.get('middle_name'), guest_data['last_name']))
 
-                guest_phone = guest_data.get('phone')
-                if guest_phone:
-                    # We use INSERT IGNORE because phone_num is a Primary Key.
-                    # If the number already exists, we skip it to prevent a crash.
+                # FIX: Insert Guest Phone (IGNORE if phone number is taken)
+                if guest_data.get('phone'):
                     cursor.execute("""
-                        INSERT IGNORE INTO Customer_Phones (phone_num, email, customer_type)
-                        VALUES (%s, %s, 'Unregistered')
-                    """, (guest_phone, email))
+                            INSERT IGNORE INTO Customer_Phones (phone_num, email, customer_type)
+                            VALUES (%s, %s, 'Unregistered')
+                        """, (guest_data['phone'], email))
 
             # 4. Create Order
             cursor.execute("""
-                INSERT INTO Orders (order_code, customer_email, status, order_date, customer_type)
-                VALUES (%s, %s, 'Active', CURDATE(), %s)
-            """, (order_code, email, customer_type))
+                    INSERT INTO Orders (order_code, customer_email, status, order_date, customer_type)
+                    VALUES (%s, %s, 'Active', CURDATE(), %s)
+                """, (order_code, email, customer_type))
 
             # 5. Process Tickets
             for seat_key in selected_seats:
                 # Format: "row-col-class-airplane_id"
                 parts = seat_key.split('-')
-                row = parts[0]
-                col = parts[1]
-                s_class = parts[2]
-                airplane_id = "-".join(parts[3:])
+                row, col, s_class = parts[0], parts[1], parts[2]
+                airplane_id = "-".join(parts[3:])  # Re-join if ID contains dashes
 
-                # Verify Price exists (Validation step)
+                # Get Price
                 cursor.execute("""
-                    SELECT price FROM Classes_In_Flights
-                    WHERE flight_id = %s AND departure_date = %s AND class_type = %s AND airplane_id = %s
-                """, (flight_id, departure_date, s_class, airplane_id))
+                        SELECT price FROM Classes_In_Flights
+                        WHERE flight_id = %s AND departure_date = %s AND class_type = %s AND airplane_id = %s
+                    """, (flight_id, departure_date, s_class, airplane_id))
 
-                price_check = cursor.fetchone()
-                if not price_check:
-                    return False, f"Pricing not found for class {s_class}", None
-                current_price = price_check['price']
+                price_res = cursor.fetchone()
+                if not price_res:
+                    raise ValueError(f"Price not set for class {s_class}")
+
+                current_price = price_res['price']
 
                 # Insert Ticket
                 cursor.execute("""
-                    INSERT INTO Flight_Tickets 
-                    (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id, current_price))
+                        INSERT INTO Flight_Tickets 
+                        (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id, current_price))
 
             return True, "Booking successful!", order_code
+
+        except mysql.connector.Error as err:
+            # Print error to PythonAnywhere error log
+            print(f"SQL Error in create_booking: {err}")
+            return False, "Booking failed: Database constraint error.", None
         except Exception as e:
-            print(f"Booking Error: {e}")
-            return False, str(e), None
+            print(f"General Error in create_booking: {e}")
+            return False, f"Error: {str(e)}", None
+
+def cancel_order_in_db(order_code):
+    """Updates order status to 'Cancelled by customer'."""
+    with db_cur() as cursor:
+        cursor.execute("UPDATE Orders SET status='Cancelled by customer' WHERE order_code=%s", (order_code,))
 
 
 class Worker:
@@ -876,3 +888,32 @@ def add_new_worker(data):
             return True, f"Added {role} {new_id} successfully."
         except Exception as e:
             return False, str(e)
+
+
+def add_user(email, password, first_name, last_name, passport_num=None, phone=None, user_type='Customer'):
+    """
+    Registers a new user in the database.
+
+    Robustness Fix:
+    - Wrapped in a try-except block to handle 'Duplicate Entry' errors gracefully.
+    - This prevents the server from crashing if a user/guest tries to register
+      with an existing email or passport number.
+    """
+    try:
+        with db_cur() as cursor:
+            # 1. Pre-check if email exists (optional, but good for quick feedback)
+            cursor.execute("SELECT email FROM Users WHERE email = %s", (email,))
+            if cursor.fetchone():
+                return False  # Email already exists
+
+            # 2. Attempt insertion
+            query = """
+                INSERT INTO Users (email, password, first_name, last_name, passport_num, phone_number, user_type)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (email, password, first_name, last_name, passport_num, phone, user_type))
+            return True
+
+    except Exception as e:
+        print(f"Error adding user: {e}")  # Log the specific error to console
+        return False

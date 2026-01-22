@@ -5,94 +5,48 @@
     <title>Select Seats - {{ flight_id }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        .cabin-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            margin-top: 20px;
-        }
-        .plane-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-        }
-        .row-number {
-            width: 30px;
-            text-align: right;
-            margin-right: 15px;
-            font-weight: bold;
-            color: #888;
-        }
-        .aisle-gap {
-            width: 30px;
-        }
-
+        .cabin-container { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 20px; }
+        .plane-row { display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .row-number { width: 30px; text-align: right; margin-right: 15px; font-weight: bold; color: #888; }
+        .aisle-gap { width: 30px; }
         .seat.business { background-color: #1a237e; color: white; border: 1px solid #000; }
         .seat.economy { background-color: #2196f3; color: white; border: 1px solid #1976d2; }
-        .seat.taken { background-color: #bdbdbd !important; cursor: not-allowed; border: 1px solid #999; }
-
-        .guest-form {
-            max-width: 600px;
-            margin: 30px auto;
-            padding: 20px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .guest-form h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #333;
-            text-align: left;
-        }
-        .guest-form label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        .guest-form input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
+        .seat.taken { background-color: #333 !important; cursor: not-allowed; border: 1px solid #444; color: #555; text-decoration: line-through; }
+        .guest-form { max-width: 600px; margin: 30px auto; padding: 20px; background: #1a1d24; border: 1px solid #333; border-radius: 8px; color: white; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .guest-form h3 { margin-top: 0; color: var(--neon-yellow); text-align: left; }
+        .guest-form label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; color: #888; }
+        .guest-form input { width: 100%; padding: 8px; border: 1px solid #444; background: #000; color: white; border-radius: 4px; box-sizing: border-box; }
+        .guest-form input:focus { border-color: var(--accent-blue); outline: none; }
     </style>
 </head>
 <body>
     <header class="header-container">
-        <div class="header-left-nav">
-            <a href="/" class="nav-link-orange"> < BACK TO FLIGHTS </a>
-        </div>
-
-        <div class="header-center">
-            <span class="welcome-text-large" style="font-size: 1.1em; color: var(--neon-yellow);">SEAT SELECTION PHASE</span>
-        </div>
-
-        <div class="header-right-logo">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="100" class="dimmed-logo">
-        </div>
+        <div class="header-left-nav"><a href="/" class="nav-link-orange"> < BACK TO FLIGHTS </a></div>
+        <div class="header-center"><span class="welcome-text-large" style="font-size: 1.1em; color: var(--neon-yellow);">SEAT SELECTION PHASE</span></div>
+        <div class="header-right-logo"><img src="{{ url_for('static', filename='logo.png') }}" alt="FLYTAU" width="100" class="dimmed-logo"></div>
     </header>
 
     <main>
-        <div class="plane-container" style="max-width: 900px;">
-            <h2 style="text-align: center;">Select Your Seats</h2>
-            <h4 style="text-align: center;">Flight {{ flight_id }}</h4>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container">
+              {% for category, message in messages %}
+                <div class="flash-message {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
 
-            <div class="legend-container">
+        <div class="plane-container" style="max-width: 900px; background: #111; border-color: #333;">
+            <h2 style="text-align: center; color: white;">Select Your Seats</h2>
+            <h4 style="text-align: center; color: var(--neon-orange);">Flight {{ flight_id }} ({{ flight_info.departure_date }})</h4>
+
+            <div class="legend-container" style="background: #1a1d24; border: 1px solid #333; color: white;">
                 <div class="legend-item"><div class="legend-box business"></div><span>Business</span></div>
                 <div class="legend-item"><div class="legend-box economy"></div><span>Economy</span></div>
                 <div class="legend-item"><div class="legend-box taken"></div><span>Taken</span></div>
-                <div class="legend-item"><div class="legend-box" style="background:#ffeb3b; border:1px solid #ddd;"></div><span>Selected</span></div>
+                <div class="legend-item"><div class="legend-box" style="background:#ffeb3b; border:1px solid #ddd;"></div><span style="color: black; background: #ffeb3b; padding: 0 5px; border-radius: 3px;">Selected</span></div>
             </div>
 
             <form action="/order_summary" method="POST">
@@ -103,37 +57,20 @@
                         {% if r in all_seats.map %}
                         {% set row_seats = all_seats.map[r] %}
                         {% set row_len = row_seats|length %}
-
                         <div class="plane-row">
                             <div class="row-number">{{ r }}</div>
-
                             {% for col, seat in row_seats.items()|sort %}
                                 <div class="seat-wrapper">
-                                    <input type="checkbox" id="seat-{{ seat.row_num }}-{{ seat.column_num }}"
-                                           name="selected_seats"
-                                           value="{{ seat.row_num }}-{{ seat.column_num }}-{{ seat.class_type }}-{{ seat.airplane_id }}"
-                                           {% if seat.is_taken %} disabled {% endif %}>
-
-                                    <label for="seat-{{ seat.row_num }}-{{ seat.column_num }}"
-                                           class="seat {{ seat.class_type|lower }} {{ 'taken' if seat.is_taken }}">
+                                    <input type="checkbox" id="seat-{{ seat.row_num }}-{{ seat.column_num }}" name="selected_seats" value="{{ seat.row_num }}-{{ seat.column_num }}-{{ seat.class_type }}-{{ seat.airplane_id }}" {% if seat.is_taken %} disabled {% endif %}>
+                                    <label for="seat-{{ seat.row_num }}-{{ seat.column_num }}" class="seat {{ seat.class_type|lower }} {{ 'taken' if seat.is_taken }}">
                                         {{ seat.column_num|map_to_letter }}
                                     </label>
                                 </div>
-
-
-                                {% if row_len == 4 and loop.index == 2 %}
-                                    <div class="aisle-gap"></div>
-
-                                {% elif row_len == 6 and loop.index == 3 %}
-                                    <div class="aisle-gap"></div>
-
-                                {% elif row_len == 9 and (loop.index == 3 or loop.index == 6) %}
-                                    <div class="aisle-gap"></div>
-
-                                {% elif row_len == 10 and (loop.index == 3 or loop.index == 7) %}
-                                    <div class="aisle-gap"></div>
+                                {% if row_len == 4 and loop.index == 2 %} <div class="aisle-gap"></div>
+                                {% elif row_len == 6 and loop.index == 3 %} <div class="aisle-gap"></div>
+                                {% elif row_len == 9 and (loop.index == 3 or loop.index == 6) %} <div class="aisle-gap"></div>
+                                {% elif row_len == 10 and (loop.index == 3 or loop.index == 7) %} <div class="aisle-gap"></div>
                                 {% endif %}
-
                             {% endfor %}
                         </div>
                         {% endif %}
@@ -144,27 +81,16 @@
                 <div class="guest-form">
                     <h3>Guest Details</h3>
                     <div class="form-row">
-                        <div>
-                            <label>First Name</label>
-                            <input type="text" name="guest_first" required>
-                        </div>
-                        <div>
-                            <label>Last Name</label>
-                            <input type="text" name="guest_last" required>
-                        </div>
+                        <div><label>First Name</label><input type="text" name="guest_first" required></div>
+                        <div><label>Last Name</label><input type="text" name="guest_last" required></div>
                     </div>
                     <div class="form-row">
-                        <div>
-                            <label>Phone Number</label>
-                            <input type="text" name="guest_phone" required>
-                        </div>
-                        <div>
-                            <label>Email Address</label>
-                            <input type="email" name="guest_email" placeholder="name@example.com" required>
-                        </div>
+                        <div><label>Phone Number</label><input type="text" name="guest_phone" required></div>
+                        <div><label>Email Address</label><input type="email" name="guest_email" placeholder="name@example.com" required></div>
                     </div>
                 </div>
                 {% endif %}
+
                 <div style="text-align: center; margin-top: 30px;">
                     <button type="submit" class="confirm-btn">Confirm Selection</button>
                 </div>
