@@ -27,8 +27,15 @@
 <body>
     <header>
         <div class="header-container">
-            <img src="{{ url_for('static', filename='logo.png') }}" width="120">
-            <h2 style="color: white; margin-left: 20px;">// FLIGHT PLAN WIZARD</h2>
+            <div style="color: var(--neon-yellow); font-family: 'Share Tech Mono', monospace; font-size: 0.9em; line-height: 1.2;">
+                Please do not forget company policy,<br>put a smile on your face :)
+            </div>
+
+            <div></div>
+
+            <div class="header-right-logo">
+                <img src="{{ url_for('static', filename='logo.png') }}" width="120">
+            </div>
         </div>
     </header>
 
@@ -134,7 +141,7 @@
             <input type="hidden" name="duration" value="{{ duration }}">
 
             <div style="background: #28a745; padding: 10px; text-align: center; border-radius: 5px; margin-bottom: 20px; color: white; font-weight: bold;">
-                ✔ ID & RUNWAY CONFIRMED AVAILABLE
+                ✓ ID & RUNWAY CONFIRMED AVAILABLE
             </div>
 
             <label>Select Aircraft (Available Only)</label>
