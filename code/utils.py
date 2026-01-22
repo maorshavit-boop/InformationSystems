@@ -18,7 +18,7 @@ db_config = {
     "host": "maorshavit10.mysql.pythonanywhere-services.com",
     "user": "maorshavit10",
     "password": "FlyTau2026",
-    "database": "maorshavit$FLYTAU",
+    "database": "maorshavit10$FLYTAU",
     "autocommit": True
 }
 
