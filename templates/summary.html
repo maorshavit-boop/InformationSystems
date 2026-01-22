@@ -61,7 +61,11 @@
                             <span style="color: #888; font-size: 0.8em;">PASSPORT NO.</span>
                             <div style="color: var(--neon-yellow);">{{ current_user.passport_num }}</div>
                         </div>
-                        <div style="grid-column: span 2;">
+                        <div>
+                            <span style="color: #888; font-size: 0.8em;">BIRTH DATE</span>
+                            <div style="color: white;">{{ current_user.birth_date }}</div>
+                        </div>
+                        <div>
                             <span style="color: #888; font-size: 0.8em;">REGISTERED EMAIL</span>
                             <div style="color: white;">{{ current_user.email }}</div>
                         </div>

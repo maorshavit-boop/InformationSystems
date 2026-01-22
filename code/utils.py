@@ -4,12 +4,21 @@ from flask_login import UserMixin
 import mysql.connector
 from contextlib import contextmanager
 
-# Configuration for database connection
-db_config = {
+# Configuration for database connection locally
+"""db_config = {
     "host": "localhost",
     "user": "root",
     "password": "root",
     "database": "FLYTAU",
+    "autocommit": True
+}
+"""
+# Configuration for database connection python anywhere
+db_config = {
+    "host": "maorshavit10.mysql.pythonanywhere-services.com",
+    "user": "maorshavit10",
+    "password": "rootroot",
+    "database": "maorshavit$FLYTAU",
     "autocommit": True
 }
 
