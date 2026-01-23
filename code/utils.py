@@ -450,6 +450,32 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
                         (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """, (order_code, flight_id, departure_date, row, col, s_class, airplane_id, current_price))
+                 #change status if full:
+                #Count Total Seats on Plane
+                cursor.execute("SELECT COUNT(*) as total FROM Seats WHERE airplane_id = %s", (airplane_id,))
+                total_seats = cursor.fetchone()['total']
+
+                #Count Booked Seats (Only for Active orders)
+                cursor.execute("""
+                               SELECT COUNT(*) as booked
+                               FROM Flight_Tickets t
+                                        JOIN Orders o ON t.order_code = o.order_code
+                               WHERE t.flight_id = %s
+                                 AND t.departure_date = %s
+                                 AND o.status = 'Active'
+                               """, (flight_id, departure_date))
+                booked_seats = cursor.fetchone()['booked']
+
+                #Check and Update
+                if booked_seats >= total_seats:
+                    cursor.execute("""
+                                   UPDATE Flights
+                                   SET status = 'Full Capacity'
+                                   WHERE flight_id = %s
+                                     AND departure_date = %s
+                                   """, (flight_id, departure_date))
+                # ----------------------------------
+
 
             return True, "Booking successful!", order_code
 
