@@ -3,7 +3,7 @@ import string
 from flask_login import UserMixin
 import mysql.connector
 from contextlib import contextmanager
-"""
+
 # Configuration for database connection locally
 db_config = {
     "host": "localhost",
@@ -20,7 +20,7 @@ db_config = {
     "password": "FlyTau2026",
     "database": "maorshavit10$FLYTAU",
     "autocommit": True
-}
+}"""
 
 
 # Context manager to handle database connection and cursor lifecycle.
