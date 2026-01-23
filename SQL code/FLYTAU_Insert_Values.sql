@@ -290,3 +290,23 @@ INSERT INTO Unregistered_Customers (email, first_name, last_name, customer_type)
 ('guest1@test.com', 'אורח', 'אחד', 'Unregistered'),
 ('guest2@test.com', 'אורח', 'שתיים', 'Unregistered'),
 ('guest3@test.com', 'אורח', 'שלוש', 'Unregistered');
+
+-- ==========================================================
+-- 6. Add Bill Gates Order (Fills FL-107)
+-- ==========================================================
+INSERT INTO Registered_Customers (email, first_name, last_name, passport_num, birth_date, password, customer_type, registration_date)
+VALUES ('bill.gates@microsoft.com', 'Bill', 'Gates', 'BG-999999', '1955-10-28', 'windows95', 'Registered', '2026-01-01');
+INSERT INTO Orders (order_code, customer_email, status, order_date, customer_type)
+VALUES ('ORD-GATES', 'bill.gates@microsoft.com', 'Active', '2026-05-20', 'Registered');
+INSERT INTO Flight_Tickets (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price)
+SELECT
+    'ORD-GATES',
+    'FL-107',
+    '2026-06-01',
+    s.row_num,
+    s.column_num,
+    s.class_type,
+    s.airplane_id,
+    CASE WHEN s.class_type = 'Business' THEN 1900 ELSE 950 END
+FROM Seats s
+WHERE s.airplane_id = 'AP-A380-3';
