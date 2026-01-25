@@ -734,6 +734,8 @@ def create_flight_final_step(form_data):
         if not p_res: return False, "Plane not found."
         plane_size = p_res['size']
 
+    if plane_size == 'Big' and not price_business:
+        return False, "Error: Business Class price is mandatory for this aircraft type (Big)."
 
     if plane_size == 'Big':
         req_pilots = 3
