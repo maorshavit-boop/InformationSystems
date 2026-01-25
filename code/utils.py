@@ -51,8 +51,13 @@ def db_cur():
 
 def register_new_customer(data):
     """
-    Registers a new customer using the 'data' dictionary from main.py.
-    FIX: Added try-except to handle Duplicate Entry errors (Email/Passport) prevents crashing.
+    Registers a new customer account with input validation and database insertion.
+    Validates that names contain only English letters, ensures the email is not already
+    registered (as a customer or a manager), and handles phone number insertion.
+
+    param: data (dict): A dictionary containing customer details (email, first_name,
+                        last_name, passport_num, birth_date, password, phones) and optional 'middle_name'.
+    Returns: tuple[bool, str]: A tuple containing the success status (True/False) and a result message.
     """
     allowed_chars = string.ascii_letters + " "
 
@@ -159,9 +164,15 @@ from datetime import datetime, timedelta
 
 def get_order_by_code(order_code, email):
     """
-    Fetches detailed information for a specific order.
-    FIX: Uses ELT() for seat letters in the summary string.
+    Retrieves detailed information for a specific booking order.
+    Validates that the order belongs to the provided email address, aggregates seat 
+    assignments into a readable format (e.g., '3A, 3B'), and fetches detailed ticket data.
+
+    param: order_code (str): The unique identifier of the order.
+    param: email (str): The email address of the user requesting the order (for security validation).
+    Returns: dict|None: A dictionary containing 'info' (order summary) and 'tickets' (list of ticket details), or None if the order is not found or does not match the email.
     """
+    
     with db_cur() as cursor:
         # Fetch Info + Seat String (Formatted as 3A, 3B...)
         query_order = """
@@ -200,9 +211,15 @@ def get_order_by_code(order_code, email):
 
 def get_customer_history(email, status_filter=None):
     """
-    Retrieves the order history for a specific customer.
-    FIX: Uses ELT() to convert column numbers to letters (e.g., '3A') directly in SQL.
+    Retrieves the booking history for a specific customer with optional status filtering.
+    Aggregates flight details, total price, and seat assignments for each order, 
+    and allows filtering by status (e.g., 'Active', 'Cancelled', 'Executed').
+
+    param: email (str): The email address of the customer.
+    param: status_filter (str, optional): A filter for order status (e.g., 'All', 'Cancelled').
+    Returns: list[dict]: A list of dictionaries, where each dictionary represents a past order's summary.
     """
+    
     with db_cur() as cursor:
         query = """
             SELECT O.order_code, 
@@ -216,7 +233,6 @@ def get_customer_history(email, status_filter=None):
                    COALESCE(SUM(FT.price),0) as total_price, 
                    COUNT(FT.row_num) as ticket_count,
 
-                   -- FIX: Convert Column Num to Letter (1->A, 2->B...)
                    GROUP_CONCAT(
                        CONCAT(FT.row_num, ELT(FT.column_num, 'A','B','C','D','E','F','G','H','I','J')) 
                        SEPARATOR ', '
@@ -320,7 +336,7 @@ def get_flight_seat_map(flight_id):
         flight = cursor.fetchone()
         if not flight: return None, {}
 
-        # 2. Fetch seats. FIX: Join with Orders to check status!
+        # 2. Fetch seats. 
         query_seats = """
             SELECT s.row_num, s.column_num, s.class_type, s.airplane_id,
                    CASE 
@@ -384,11 +400,16 @@ def get_current_price(flight_id, class_type):
 
 def create_booking(flight_id, selected_seats, user, guest_data=None):
     """
-    Handles booking creation.
-    FIX: Improved error handling and Guest creation logic.
-    """
+    Handles the creation of a flight booking for both registered users and guests.
+    Validates flight availability, manages guest registration if needed, creates the order,
+    processes individual tickets, and updates the flight status to 'Full Capacity' if necessary.
 
-    import random, string
+    param: flight_id (str): The unique identifier of the flight to book.
+    param: selected_seats (list[str]): A list of seat identifiers (format: 'row-col-class-airplane_id').
+    param: user (UserMixin): The current user object. Used to check authentication and prevent Managers from booking.
+    param: guest_data (dict, optional): Details for unregistered users (email, name, phone). Required if user is not authenticated.
+    Returns: tuple[bool, str, str|None]: A tuple containing success status, a status message, and the generated order code (or None on failure).
+    """
 
     with db_cur() as cursor:
         try:
@@ -420,13 +441,11 @@ def create_booking(flight_id, selected_seats, user, guest_data=None):
 
                 customer_type = 'Unregistered'
 
-                # FIX: Insert Guest if not exists (IGNORE duplicates)
                 cursor.execute("""
                         INSERT IGNORE INTO Unregistered_Customers (email, first_name, middle_name, last_name, customer_type)
                         VALUES (%s, %s, %s, %s, 'Unregistered')
                     """, (email, guest_data['first_name'], guest_data.get('middle_name'), guest_data['last_name']))
 
-                # FIX: Insert Guest Phone (IGNORE if phone number is taken)
                 if guest_data.get('phone'):
                     cursor.execute("""
                             INSERT IGNORE INTO Customer_Phones (phone_num, email, customer_type)
@@ -935,8 +954,6 @@ def add_new_worker(data):
 def add_user(email, password, first_name, last_name, passport_num=None, phone=None, user_type='Customer'):
     """
     Registers a new user in the database.
-
-    Robustness Fix:
     - Wrapped in a try-except block to handle 'Duplicate Entry' errors gracefully.
     - This prevents the server from crashing if a user/guest tries to register
       with an existing email or passport number.
