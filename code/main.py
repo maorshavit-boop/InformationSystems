@@ -670,7 +670,6 @@ def guest_manage():
             return redirect(url_for('guest_manage'))
 
         # 2. Handle Logic
-        # FIX: If action is 'view' OR None (initial login), show the order page.
         if action == 'view' or action is None:
             return render_template('guest_order.html', order=order_data, email=email)
 
