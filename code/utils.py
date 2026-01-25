@@ -4,7 +4,7 @@ from flask_login import UserMixin
 import mysql.connector
 from contextlib import contextmanager
 
-"""
+
 # Configuration for database connection locally
 db_config = {
     "host": "localhost",
@@ -22,7 +22,7 @@ db_config = {
     "database": "maorshavit10$FLYTAU",
     "autocommit": True
 }
-
+"""
 
 # Context manager to handle database connection and cursor lifecycle.
 @contextmanager
@@ -54,6 +54,20 @@ def register_new_customer(data):
     Registers a new customer using the 'data' dictionary from main.py.
     FIX: Added try-except to handle Duplicate Entry errors (Email/Passport) prevents crashing.
     """
+    allowed_chars = string.ascii_letters + " "
+
+    first_name = data['first_name']
+    middle_name = data.get('middle_name')
+    last_name = data['last_name']
+
+    if not all(c in allowed_chars for c in first_name):
+        return False, "Registration failed: First name must contain only English letters."
+
+    if not all(c in allowed_chars for c in last_name):
+        return False, "Registration failed: Last name must contain only English letters."
+
+    if middle_name and not all(c in allowed_chars for c in middle_name):
+        return False, "Registration failed: Middle name must contain only English letters."
     with db_cur() as cursor:
         try:
             # 1. Validation: Check if email exists
@@ -81,8 +95,7 @@ def register_new_customer(data):
                 data['password']
             ))
 
-            # 3. Insert Phones (Robust Handling)
-            # FIX: Use INSERT IGNORE to prevent crash if phone number is already taken by another user
+            # 3. Insert Phones
             insert_phone = "INSERT IGNORE INTO Customer_Phones (phone_num, email, customer_type) VALUES (%s, %s, 'Registered')"
 
             phone_list = data.get('phones', [])

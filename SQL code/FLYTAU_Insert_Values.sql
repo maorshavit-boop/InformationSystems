@@ -1,7 +1,7 @@
 USE FLYTAU;
 
 -- ==========================================================
--- 1. ניקוי נתונים מלא (Reset)
+-- 1. Full Data Reset
 -- ==========================================================
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -25,14 +25,14 @@ TRUNCATE TABLE Managers;
 TRUNCATE TABLE Pilots;
 TRUNCATE TABLE Flight_Attendants;
 
--- מחיקת טבלת עזר אם נשארה מהרצה קודמת
+-- Drop helper table if it remains from previous run
 DROP TABLE IF EXISTS NumberGen;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
 
 -- ==========================================================
--- 2. יצירת טבלת עזר ליצירת מושבים (במקום לולאות)
+-- 2. Create helper table for seat generation (instead of loops)
 -- ==========================================================
 CREATE TABLE NumberGen (n INT PRIMARY KEY);
 INSERT INTO NumberGen VALUES
@@ -44,7 +44,7 @@ INSERT INTO NumberGen VALUES
 
 
 -- ==========================================================
--- 3. הזנת נתונים בסיסיים (מטוסים ומסלולים)
+-- 3. Insert basic data (Airplanes and Routes)
 -- ==========================================================
 INSERT INTO Flight_Routes (source_airport, destination_airport, flight_duration) VALUES
 ('TLV', 'JFK', 660), ('JFK', 'TLV', 630),
@@ -70,14 +70,14 @@ INSERT IGNORE INTO Airplane_Classes (class_type, airplane_id, columns_count, row
 
 
 -- ==========================================================
--- 4. יצירת המושבים (ללא חפיפות וללא שגיאות)
+-- 4. Create Seats (No overlaps, no errors)
 -- ==========================================================
 
 -- === AP-B787-1 ===
 -- Business: Rows 1-5 (4 cols)
 INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
 SELECT r.n, c.n, 'Business', 'AP-B787-1' FROM NumberGen r JOIN NumberGen c WHERE r.n <= 5 AND c.n <= 4;
--- Economy: Rows 6-35 (9 cols) -> מתחיל אחרי הביזנס
+-- Economy: Rows 6-35 (9 cols) -> Starts after Business
 INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
 SELECT r.n, c.n, 'Economy', 'AP-B787-1' FROM NumberGen r JOIN NumberGen c WHERE r.n BETWEEN 6 AND 35 AND c.n <= 9;
 
@@ -90,7 +90,7 @@ SELECT r.n, c.n, 'Economy', 'AP-B737-2' FROM NumberGen r JOIN NumberGen c WHERE 
 -- Business: Rows 1-10 (6 cols)
 INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
 SELECT r.n, c.n, 'Business', 'AP-A380-3' FROM NumberGen r JOIN NumberGen c WHERE r.n <= 10 AND c.n <= 6;
--- Economy: Rows 11-50 (10 cols) -> מתחיל אחרי הביזנס
+-- Economy: Rows 11-50 (10 cols) -> Starts after Business
 INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
 SELECT r.n, c.n, 'Economy', 'AP-A380-3' FROM NumberGen r JOIN NumberGen c WHERE r.n BETWEEN 11 AND 50 AND c.n <= 10;
 
@@ -112,12 +112,12 @@ SELECT r.n, c.n, 'Business', 'AP-F10X-6' FROM NumberGen r JOIN NumberGen c WHERE
 INSERT INTO Seats (row_num, column_num, class_type, airplane_id)
 SELECT r.n, c.n, 'Economy', 'AP-F10X-6' FROM NumberGen r JOIN NumberGen c WHERE r.n BETWEEN 6 AND 25 AND c.n <= 6;
 
--- ניקוי טבלת העזר
+-- Drop helper table
 DROP TABLE NumberGen;
 
 
 -- ==========================================================
--- 5. הזנת אנשים, טיסות והזמנות
+-- 5. Insert People, Flights, and Orders
 -- ==========================================================
 
 INSERT INTO Managers VALUES
@@ -296,8 +296,10 @@ INSERT INTO Unregistered_Customers (email, first_name, last_name, customer_type)
 -- ==========================================================
 INSERT INTO Registered_Customers (email, first_name, last_name, passport_num, birth_date, password, customer_type, registration_date)
 VALUES ('bill.gates@microsoft.com', 'Bill', 'Gates', 'BG-999999', '1955-10-28', 'windows95', 'Registered', '2026-01-01');
+
 INSERT INTO Orders (order_code, customer_email, status, order_date, customer_type)
 VALUES ('ORD-GATES', 'bill.gates@microsoft.com', 'Active', '2026-05-20', 'Registered');
+
 INSERT INTO Flight_Tickets (order_code, flight_id, departure_date, row_num, column_num, class_type, airplane_id, price)
 SELECT
     'ORD-GATES',
