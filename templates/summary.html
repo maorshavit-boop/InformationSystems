@@ -35,6 +35,7 @@
                         <div><span style="color: #888; font-size: 0.8em;">FULL NAME</span><div style="color: white;">{{ current_user.first_name }} {{ current_user.last_name }}</div></div>
                         <div><span style="color: #888; font-size: 0.8em;">PASSPORT NO.</span><div style="color: var(--neon-yellow);">{{ current_user.passport_num }}</div></div>
                         <div><span style="color: #888; font-size: 0.8em;">REGISTERED EMAIL</span><div style="color: white;">{{ current_user.email }}</div></div>
+                        <div><span style="color: #888; font-size: 0.8em;">BIRTH DATE</span><div style="color: white;">{{ current_user.birth_date }}</div></div>
                     </div>
                 {% elif guest %}
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">

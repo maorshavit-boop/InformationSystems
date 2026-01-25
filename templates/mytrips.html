@@ -43,7 +43,8 @@
             <a href="{{ url_for('my_trips', status='All') }}" class="filter-btn {{ 'active' if current_filter == 'All' else '' }}">ALL</a>
             <a href="{{ url_for('my_trips', status='Active') }}" class="filter-btn {{ 'active' if current_filter == 'Active' else '' }}">ACTIVE</a>
             <a href="{{ url_for('my_trips', status='Executed') }}" class="filter-btn {{ 'active' if current_filter == 'Executed' else '' }}">COMPLETED</a>
-            <a href="{{ url_for('my_trips', status='Cancelled by customer') }}" class="filter-btn {{ 'active' if current_filter == 'Cancelled by customer' else '' }}">CANCELLED BY CUSTOMER</a>
+            <a href="{{ url_for('my_trips', status='Cancelled by customer') }}" class="filter-btn {{ 'active' if current_filter == 'Cancelled by customer' else '' }}">CANCELLED BY COSTUMER</a>
+            <a href="{{ url_for('my_trips', status='Cancelled by system') }}" class="filter-btn {{ 'active' if current_filter == 'Cancelled by system' else '' }}">CANCELLED BY COMPANY</a>
         </div>
 
         {% if orders %}
